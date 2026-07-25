@@ -484,96 +484,109 @@ def is_newer_version(latest_ver, current_ver):
     return parse_version_tuple(latest_ver) > parse_version_tuple(current_ver)
 
 def check_for_updates():
-    print_banner()
-    print(f"\n  {BOLD}CHECK FOR UPDATES{RESET}")
-    print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
-    animated_loading("Connecting to GitHub release server...", 0.5)
-
-    latest_version = None
-    release_notes = ""
-    download_url = GITHUB_RAW_URL
-
-    req = urllib.request.Request(
-        GITHUB_API_RELEASE_URL,
-        headers={"User-Agent": f"UwawConnect/{__version__}"}
-    )
-
     try:
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status == 200:
-                data = json.loads(response.read().decode('utf-8'))
-                latest_version = data.get("tag_name", "").lstrip('v')
-                release_notes = data.get("body", "No release notes provided.")
-    except Exception:
-        # Fallback: check raw python file version constant
-        try:
-            raw_req = urllib.request.Request(
-                GITHUB_RAW_URL,
-                headers={"User-Agent": f"UwawConnect/{__version__}"}
-            )
-            with urllib.request.urlopen(raw_req, timeout=5) as raw_resp:
-                if raw_resp.status == 200:
-                    content = raw_resp.read().decode('utf-8')
-                    match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
-                    if match:
-                        latest_version = match.group(1)
-        except Exception:
-            pass
-
-    if not latest_version:
-        print(f"\n  {RED}[!] Unable to reach update server (offline or repository un-released).{RESET}")
-        print(f"  {DIM}Working in offline mode. Current version: v{__version__}{RESET}\n")
-        input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
-        return
-
-    if is_newer_version(latest_version, __version__):
-        print(f"\n  {GREEN}[+] New Update Available!{RESET}")
-        print(f"  {DIM}Current Installed Version:{RESET} v{__version__}")
-        print(f"  {GREEN}{BOLD}Latest Remote Release:{RESET}    v{latest_version}")
-        if release_notes:
-            print(f"\n  {BOLD}Release Notes:{RESET}")
-            for line in release_notes.strip().splitlines()[:8]:
-                print(f"    {DIM}{line}{RESET}")
-        
+        print_banner()
+        print(f"\n  {BOLD}CHECK FOR UPDATES{RESET}")
         print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
-        confirm = input(f"\n  {YELLOW}[?] Install update now (in-place)? [Y/n]: {RESET}").strip().lower()
-        if confirm in ('', 'y', 'yes'):
-            animated_loading(f"Downloading UwawConnect v{latest_version}...", 0.6)
+        animated_loading("Connecting to GitHub release server...", 0.5)
+
+        latest_version = None
+        release_notes = ""
+        download_url = GITHUB_RAW_URL
+
+        req = urllib.request.Request(
+            GITHUB_API_RELEASE_URL,
+            headers={"User-Agent": f"UwawConnect/{__version__}"}
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=4) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    latest_version = data.get("tag_name", "").lstrip('v')
+                    release_notes = data.get("body", "No release notes provided.")
+        except Exception:
+            # Fallback: check raw python file version constant
             try:
                 raw_req = urllib.request.Request(
-                    download_url,
+                    GITHUB_RAW_URL,
                     headers={"User-Agent": f"UwawConnect/{__version__}"}
                 )
-                with urllib.request.urlopen(raw_req, timeout=10) as resp:
-                    new_code = resp.read().decode('utf-8')
-                
-                target_path = os.path.abspath(sys.argv[0])
-                backup_path = target_path + ".bak"
+                with urllib.request.urlopen(raw_req, timeout=4) as raw_resp:
+                    if raw_resp.status == 200:
+                        content = raw_resp.read().decode('utf-8')
+                        match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+                        if match:
+                            latest_version = match.group(1)
+            except Exception:
+                pass
 
-                # Backup existing script
-                with open(target_path, 'r', encoding='utf-8') as f:
-                    old_code = f.read()
-                with open(backup_path, 'w', encoding='utf-8') as f:
-                    f.write(old_code)
+        if not latest_version:
+            print(f"\n  {RED}[!] Unable to reach update server (offline or DNS failed).{RESET}")
+            print(f"  {DIM}Working in offline mode. Current version: v{__version__}{RESET}\n")
+            try:
+                input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
+            except (KeyboardInterrupt, EOFError):
+                pass
+            return
 
-                # Overwrite script
-                with open(target_path, 'w', encoding='utf-8') as f:
-                    f.write(new_code)
+        if is_newer_version(latest_version, __version__):
+            print(f"\n  {GREEN}[+] New Update Available!{RESET}")
+            print(f"  {DIM}Current Installed Version:{RESET} v{__version__}")
+            print(f"  {GREEN}{BOLD}Latest Remote Release:{RESET}    v{latest_version}")
+            if release_notes:
+                print(f"\n  {BOLD}Release Notes:{RESET}")
+                for line in release_notes.strip().splitlines()[:8]:
+                    print(f"    {DIM}{line}{RESET}")
+            
+            print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
+            confirm = input(f"\n  {YELLOW}[?] Install update now (in-place)? [Y/n]: {RESET}").strip().lower()
+            if confirm in ('', 'y', 'yes'):
+                animated_loading(f"Downloading UwawConnect v{latest_version}...", 0.6)
+                try:
+                    raw_req = urllib.request.Request(
+                        download_url,
+                        headers={"User-Agent": f"UwawConnect/{__version__}"}
+                    )
+                    with urllib.request.urlopen(raw_req, timeout=10) as resp:
+                        new_code = resp.read().decode('utf-8')
+                    
+                    target_path = os.path.abspath(sys.argv[0])
+                    backup_path = target_path + ".bak"
 
-                print(f"\n  {GREEN}[OK] Update completed successfully!{RESET}")
-                print(f"  {DIM}[SYS] Safety backup saved to {backup_path}{RESET}")
-                print(f"  {CYAN}[SYS] Restarting UwawConnect v{latest_version}...{RESET}\n")
-                time.sleep(1.2)
-                
-                # Re-exec process
-                os.execv(sys.executable, [sys.executable] + sys.argv)
-            except Exception as e:
-                print(f"\n  {RED}[ERROR] Update failed:{RESET} {e}")
-                input(f"\n  {YELLOW}Press ENTER to return to main menu...{RESET}")
-    else:
-        print(f"\n  {GREEN}[OK] UwawConnect is up to date!{RESET}")
-        print(f"  {DIM}You are running the latest version (v{__version__}).{RESET}\n")
-        input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
+                    # Backup existing script
+                    with open(target_path, 'r', encoding='utf-8') as f:
+                        old_code = f.read()
+                    with open(backup_path, 'w', encoding='utf-8') as f:
+                        f.write(old_code)
+
+                    # Overwrite script
+                    with open(target_path, 'w', encoding='utf-8') as f:
+                        f.write(new_code)
+
+                    print(f"\n  {GREEN}[OK] Update completed successfully!{RESET}")
+                    print(f"  {DIM}[SYS] Safety backup saved to {backup_path}{RESET}")
+                    print(f"  {CYAN}[SYS] Restarting UwawConnect v{latest_version}...{RESET}\n")
+                    time.sleep(1.2)
+                    
+                    # Re-exec process
+                    os.execv(sys.executable, [sys.executable] + sys.argv)
+                except Exception as e:
+                    print(f"\n  {RED}[ERROR] Update failed:{RESET} {e}")
+                    try:
+                        input(f"\n  {YELLOW}Press ENTER to return to main menu...{RESET}")
+                    except (KeyboardInterrupt, EOFError):
+                        pass
+        else:
+            print(f"\n  {GREEN}[OK] UwawConnect is up to date!{RESET}")
+            print(f"  {DIM}You are running the latest version (v{__version__}).{RESET}\n")
+            try:
+                input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
+            except (KeyboardInterrupt, EOFError):
+                pass
+    except (KeyboardInterrupt, EOFError):
+        print(f"\n  {YELLOW}[SYS] Update check cancelled.{RESET}")
+        time.sleep(0.4)
 
 def setup_menu():
     while True:
@@ -958,18 +971,22 @@ def run_session(port, baud):
     return action
 
 def main():
-    while True:
-        if len(sys.argv) >= 2:
-            port = sys.argv[1]
-            baud = int(sys.argv[2]) if len(sys.argv) >= 3 else 115200
-            sys.argv = [] # Clear after first run
-        else:
-            port, baud = setup_menu()
+    try:
+        while True:
+            if len(sys.argv) >= 2:
+                port = sys.argv[1]
+                baud = int(sys.argv[2]) if len(sys.argv) >= 3 else 115200
+                sys.argv = [] # Clear after first run
+            else:
+                port, baud = setup_menu()
 
-        result = run_session(port, baud)
-        if result == 'QUIT':
-            print_goodbye()
-            break
+            result = run_session(port, baud)
+            if result == 'QUIT':
+                print_goodbye()
+                break
+    except (KeyboardInterrupt, EOFError):
+        print_goodbye()
+        sys.exit(0)
 
 if __name__ == '__main__':
     main()
