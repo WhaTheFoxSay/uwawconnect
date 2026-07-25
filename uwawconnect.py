@@ -25,7 +25,7 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
@@ -142,120 +142,22 @@ def ensure_uwaw_directories():
         except Exception:
             pass
 
-# Theme Engine & Palettes
-THEME_PALETTES = {
-    "Cyberpunk Neon": {
-        "CYAN": "\033[1;36m", "MAGENTA": "\033[1;35m", "GREEN": "\033[1;32m",
-        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
-        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
-    },
-    "Win2K / NT 5.0 Server": {
-        "CYAN": "\033[1;36m",       # Tochka Teal / Windows 2000 Cyan-Green
-        "MAGENTA": "\033[1;35m",
-        "GREEN": "\033[1;32m",     # High-Contrast Mint Green
-        "YELLOW": "\033[1;33m",    # High-Contrast Amber Yellow
-        "RED": "\033[1;31m",       # High-Contrast Red
-        "WHITE": "\033[1;37m",     # Crisp White
-        "BOLD": "\033[1m",
-        "DIM": "\033[2m",
-        "RESET": "\033[0m",
-        "BG": ""
-    },
-    "Matrix Green": {
-        "CYAN": "\033[1;32m", "MAGENTA": "\033[0;32m", "GREEN": "\033[1;92m",
-        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
-        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
-    },
-    "Solarized Amber": {
-        "CYAN": "\033[1;33m", "MAGENTA": "\033[0;33m", "GREEN": "\033[1;33m",
-        "YELLOW": "\033[1;93m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
-        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
-    },
-    "Dracula Purple": {
-        "CYAN": "\033[1;35m", "MAGENTA": "\033[1;34m", "GREEN": "\033[1;32m",
-        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
-        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
-    }
-}
-
-CURRENT_THEME = "Win2K / NT 5.0 Server"
-
-# Professional ANSI Color Tokens
-CYAN = "\033[1;36m"
-MAGENTA = "\033[1;35m"
-GREEN = "\033[1;32m"
-YELLOW = "\033[1;33m"
-RED = "\033[1;31m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-RESET = "\033[0m"
-WHITE = "\033[1;37m"
+# Universal High-Contrast ANSI Color Tokens (Compatible with Light & Dark Terminals)
+CYAN = "\033[36m"        # Frame Cyan
+MAGENTA = "\033[35m"     # Accent Magenta
+GREEN = "\033[32m"       # Success/Mode Dark Green
+YELLOW = "\033[33m"      # Highlight Amber Yellow
+RED = "\033[31m"         # Exit/Alert Red
+BOLD = "\033[1m"         # Bold Foreground
+DIM = "\033[0m"          # Standard Text
+RESET = "\033[0m"        # Standard Reset
+WHITE = "\033[1m"        # Crisp Bold Text (Adapts to Light & Dark terminal)
 BG = ""
 
-CONFIG_FILE = os.path.join(UWAW_BASE_DIR, "config.json")
-
-def load_persistent_theme():
-    """Loads saved theme preference from ~/.uwaw/config.json."""
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                data = json.load(f)
-                saved_theme = data.get("theme")
-                if saved_theme in THEME_PALETTES:
-                    apply_theme(saved_theme, save=False)
-                    return
-        except Exception:
-            pass
-    apply_theme("Win2K / NT 5.0 Server", save=False)
-
-def apply_theme(theme_name, save=True):
-    global CURRENT_THEME, CYAN, MAGENTA, GREEN, YELLOW, RED, WHITE, BOLD, DIM, RESET, BG, HEADER_BOX
-    if theme_name not in THEME_PALETTES:
-        theme_name = "Win2K / NT 5.0 Server"
-    CURRENT_THEME = theme_name
-    t = THEME_PALETTES[theme_name]
-    CYAN = t["CYAN"]
-    MAGENTA = t["MAGENTA"]
-    GREEN = t["GREEN"]
-    YELLOW = t["YELLOW"]
-    RED = t["RED"]
-    WHITE = t["WHITE"]
-    BOLD = t["BOLD"]
-    DIM = t["DIM"]
-    RESET = t["RESET"]
-    BG = t.get("BG", "")
-
-    HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
-│ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
-│ {DIM}Wownet Infrastructure Operating Console Interface{RESET}{CYAN}                     │
+HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
+│ {WHITE}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
+│ Wownet Infrastructure Operating Console Interface                           │
 └─────────────────────────────────────────────────────────────────────────────┘{RESET}"""
-
-    if save:
-        ensure_uwaw_directories()
-        try:
-            with open(CONFIG_FILE, "w") as f:
-                json.dump({"theme": theme_name}, f)
-        except Exception:
-            pass
-
-def render_theme_overlay():
-    print(f"\r\n\n{CYAN}┌── 🎨 TERMINAL COLOR THEME SELECTOR ────────────────────────────────────────┐{RESET}")
-    print(f"{CYAN}│ {DIM}Select color theme style:{RESET}{CYAN}{' '*49}│{RESET}")
-    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
-    theme_list = list(THEME_PALETTES.keys())
-    for idx, tname in enumerate(theme_list, 1):
-        active_mark = f"{GREEN}★ ACTIVE{RESET}" if tname == CURRENT_THEME else ""
-        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{tname:<32}{RESET} {active_mark:<25} {CYAN}│{RESET}")
-    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
-    print(f"  {YELLOW}[>] Select Theme [1-{len(theme_list)} / Q]: {RESET}", end="", flush=True)
-
-    choice = get_key()
-    print(choice)
-    if choice.isdigit() and 1 <= int(choice) <= len(theme_list):
-        chosen_theme = theme_list[int(choice) - 1]
-        apply_theme(chosen_theme)
-        sys.stdout.write(f"\r\n  {GREEN}[SYS] Theme set to: {chosen_theme}{RESET}\r\n")
-        sys.stdout.flush()
 
 def strip_ansi_codes(text):
     """Removes ANSI formatting escape sequences from raw string."""
@@ -308,17 +210,27 @@ def grab_running_config(ser, detected_vendor, port):
 
 def render_macro_overlay():
     """Lists files in ~/.uwaw/macros/ and injects chosen macro line-by-line to serial line."""
+    def make_box_line(content, width=79):
+        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
+        pad = max(0, width - 2 - vlen)
+        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
+
     ensure_uwaw_directories()
     macro_files = sorted([f for f in os.listdir(MACROS_DIR) if os.path.isfile(os.path.join(MACROS_DIR, f))])
     if not macro_files:
         sys.stdout.write(f"\r\n  {YELLOW}[SYS] No macro files found in {MACROS_DIR}{RESET}\r\n")
         return None
 
-    print(f"\r\n\n{CYAN}┌── ⚡ AUTOMATION MACRO PLAYBOOKS [{WHITE}{BOLD}~/.uwaw/macros/{RESET}{CYAN}] ───────────┐{RESET}")
-    print(f"{CYAN}│ {DIM}Select macro playbook [1-{len(macro_files)}] to execute, or [Q/ESC] to cancel:{RESET}{CYAN}{' '*8}│{RESET}")
-    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
+    l1 = f"{CYAN}┌── AUTOMATION MACRO PLAYBOOKS [{BOLD}~/.uwaw/macros/{RESET}{CYAN}] ─────────────────────────┐{RESET}"
+    l2_c = f" Select macro playbook [1-{len(macro_files)}] to execute, or [Q/ESC] to cancel:"
+    l_sep = f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}"
+
+    print(f"\r\n\n{l1}")
+    print(make_box_line(l2_c))
+    print(l_sep)
     for idx, fname in enumerate(macro_files, 1):
-        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{fname:<68}{RESET} {CYAN}│{RESET}")
+        row_c = f" [{idx}] {fname:<68}"
+        print(make_box_line(row_c))
     print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
     print(f"  {YELLOW}[>] Select Macro [1-{len(macro_files)} / Q]: {RESET}", end="", flush=True)
 
@@ -337,7 +249,12 @@ def render_macro_overlay():
     return None
 
 def trigger_break_signal(ser):
-    """Sends hardware UART Break signal and displays ROMMON / Password Recovery ANSI Wizard."""
+    """Sends hardware UART Break signal and displays ROMMON / Password Recovery Reference."""
+    def make_box_line(content, width=79):
+        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
+        pad = max(0, width - 2 - vlen)
+        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
+
     sys.stdout.write(f"\r\n  {YELLOW}[SYS HARDWARE BREAK] Sending UART Break Signal (0.25s pulse)...{RESET}\r\n")
     sys.stdout.flush()
     try:
@@ -350,11 +267,14 @@ def trigger_break_signal(ser):
         except Exception as e:
             sys.stdout.write(f"  {RED}[ERROR] Hardware Break failed: {e}{RESET}\r\n")
 
-    print(f"\r\n{CYAN}┌── 🔨 ROUTER & SWITCH PASSWORD RECOVERY QUICK REFERENCE ────────────────────┐{RESET}")
-    print(f"{CYAN}│ {WHITE}CISCO IOS ROMMON:{RESET} {YELLOW}confreg 0x2142{RESET} -> {YELLOW}reset{RESET} (Bypasses startup-config)   {CYAN}│{RESET}")
-    print(f"{CYAN}│ {WHITE}JUNIPER JUNOS:{RESET}   {YELLOW}boot -s{RESET} -> {YELLOW}recovery{RESET} -> {YELLOW}set system root-authentication{RESET}   {CYAN}│{RESET}")
-    print(f"{CYAN}│ {WHITE}MIKROTIK:{RESET}        Hold Reset Button on Boot until User LED flashes           {CYAN}│{RESET}")
-    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
+    b1 = f"{CYAN}┌── ROUTER & SWITCH PASSWORD RECOVERY QUICK REFERENCE ────────────────────────┐{RESET}"
+    b2_c = f" CISCO IOS ROMMON: {YELLOW}confreg 0x2142{RESET} -> {YELLOW}reset{RESET} (Bypasses startup-config)"
+    b3_c = f" JUNIPER JUNOS:   {YELLOW}boot -s{RESET} -> {YELLOW}recovery{RESET} -> {YELLOW}set system root-authentication{RESET}"
+    b4_c = f" MIKROTIK:        Hold Reset Button on Boot until User LED flashes"
+    b5 = f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}"
+
+    print(f"\r\n{b1}\n{make_box_line(b2_c)}\n{make_box_line(b3_c)}\n{make_box_line(b4_c)}\n{b5}\n")
+    sys.stdout.flush()
 
 HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
 │ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
@@ -516,14 +436,25 @@ def render_cheatsheet_overlay(detected_vendor=None):
     Allows user to select 1-N or press ESC/Q to return.
     Returns the selected command string (or None).
     """
-    vendor_key = detected_vendor if (detected_vendor in VENDOR_CHEATSHEETS) else "General / Standard"
-    commands = VENDOR_CHEATSHEETS[vendor_key]
+    def make_box_line(content, width=79):
+        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
+        pad = max(0, width - 2 - vlen)
+        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
 
-    print(f"\r\n\n{CYAN}┌── 💡 VENDOR QUICK CHEAT-SHEET [{WHITE}{BOLD}{vendor_key.upper()}{RESET}{CYAN}] ─────────────────────┐{RESET}")
-    print(f"{CYAN}│ {DIM}Press key [1-{len(commands)}] to auto-inject command, or [Q/ESC] to cancel:{RESET}{CYAN}{' '*12}│{RESET}")
-    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
+    vendor_key = (detected_vendor if (detected_vendor in VENDOR_CHEATSHEETS) else "General / Standard").upper()
+    commands = VENDOR_CHEATSHEETS.get(detected_vendor, VENDOR_CHEATSHEETS["General / Standard"])
+
+    dash_cnt = max(0, 79 - 33 - len(vendor_key))
+    l1 = f"{CYAN}┌── VENDOR QUICK CHEAT-SHEET [{BOLD}{vendor_key}{RESET}{CYAN}] {'─'*dash_cnt}┐{RESET}"
+    l2_c = f" Press key [1-{len(commands)}] to auto-inject command, or [Q/ESC] to cancel:"
+    l_sep = f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}"
+
+    print(f"\r\n\n{l1}")
+    print(make_box_line(l2_c))
+    print(l_sep)
     for idx, (label, cmd) in enumerate(commands, 1):
-        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{label:<34}{RESET} {YELLOW}➔ {cmd:<28}{RESET} {CYAN}│{RESET}")
+        row_c = f" [{idx}] {label:<35} -> {cmd:<25}"
+        print(make_box_line(row_c))
     print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
     print(f"  {YELLOW}[>] Select Command [1-{len(commands)} / Q]: {RESET}", end="", flush=True)
 
@@ -895,11 +826,11 @@ def run_session(port, baud):
                 log_file_handle.close()
             ser.close()
             vendor_disp = detected_vendor if detected_vendor else "Generic / Unknown"
-            log_disp = log_file_path if is_logging else "Disabled"
+            log_disp = os.path.basename(log_file_path) if is_logging and log_file_path else "Disabled"
             print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
             print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
             print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
-            print(f"{CYAN}│ {WHITE}SESSION THEME:{RESET} {CYAN}{CURRENT_THEME:<15}{RESET} │ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<27}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<64}{CYAN}│{RESET}")
             print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
     else:
@@ -1016,15 +947,12 @@ def run_session(port, baud):
             print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
             print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
             print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
-            print(f"{CYAN}│ {WHITE}SESSION THEME:{RESET} {CYAN}{CURRENT_THEME:<15}{RESET} │ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<27}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<64}{CYAN}│{RESET}")
             print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
     return action
 
-    return action
-
 def main():
-    load_persistent_theme()
     while True:
         if len(sys.argv) >= 2:
             port = sys.argv[1]

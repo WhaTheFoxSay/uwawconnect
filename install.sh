@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# UwawConnect v1.2.1 Automated Self-Healing Installer (macOS, Linux, BSD, Solaris, Haiku OS)
+# UwawConnect v1.3.0 Automated Self-Healing Installer (macOS, Linux, BSD, Solaris, Haiku OS)
 # Wownet Network Infrastructure Operations
 # ==============================================================================
 
@@ -16,7 +16,7 @@ WHITE='\033[1;37m'
 
 echo -e "${CYAN}"
 echo "┌─────────────────────────────────────────────────────────────────────────────┐"
-echo "│ UWAWCONNECT v1.2.1 ── Automated Self-Healing Installer Script              │"
+echo "│ UWAWCONNECT v1.3.0 ── Automated Self-Healing Installer Script              │"
 echo "└─────────────────────────────────────────────────────────────────────────────┘"
 echo -e "${RESET}"
 
@@ -138,7 +138,7 @@ for RC in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
 done
 
 echo -e "\n${CYAN}┌─────────────────────────────────────────────────────────────────────────────┐${RESET}"
-echo -e "${CYAN}│ ${GREEN}[SUCCESS] UwawConnect v1.2.1 Installed Successfully!                       │${RESET}"
+echo -e "${CYAN}│ ${GREEN}[SUCCESS] UwawConnect v1.3.0 Installed Successfully!                       │${RESET}"
 echo -e "${CYAN}│ ${YELLOW}Run 'source ~/.zshrc' (or ~/.bashrc), then type:                             │${RESET}"
 echo -e "${CYAN}│ ${BOLD}${WHITE}uwaw${RESET}${CYAN}                                                                        │${RESET}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────────────────────┘${RESET}\n"
