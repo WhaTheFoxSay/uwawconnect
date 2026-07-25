@@ -9,6 +9,9 @@ import sys
 import os
 import glob
 import time
+import re
+import json
+import urllib.request
 
 # Cross-platform terminal raw mode imports
 IS_WINDOWS = os.name == 'nt'
@@ -18,6 +21,15 @@ else:
     import termios
     import tty
     import select
+
+# Version & Governance Constants
+__version__ = "1.0.0"
+__release_channel__ = "stable"
+
+REPO_OWNER = "WhaTheFoxSay"
+REPO_NAME = "uwawconnect"
+GITHUB_API_RELEASE_URL = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+GITHUB_RAW_URL = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/main/uwawconnect.py"
 
 # Professional ANSI Color Tokens
 CYAN = "\033[1;36m"
@@ -31,7 +43,7 @@ RESET = "\033[0m"
 WHITE = "\033[1;37m"
 
 HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
-│ {WHITE}{BOLD}UWAWCONNECT v1.0{RESET}{CYAN} ── Serial Console System                              │
+│ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
 │ {DIM}Wownet Infrastructure Operating Console Interface{RESET}{CYAN}                     │
 └─────────────────────────────────────────────────────────────────────────────┘{RESET}"""
 
@@ -155,6 +167,113 @@ def perform_uninstall():
     print_uninstall_goodbye()
     sys.exit(0)
 
+def parse_version_tuple(v_str):
+    """
+    Parses version strings like 'v1.1.2a', '1.0.0', 'v1.2.0-hotfix1' into comparable tuples.
+    Returns (major, minor, patch, suffix).
+    """
+    cleaned = str(v_str).strip().lstrip('vV')
+    match = re.match(r'^(\d+)\.(\d+)\.(\d+)(.*)$', cleaned)
+    if match:
+        major, minor, patch, suffix = match.groups()
+        return (int(major), int(minor), int(patch), suffix)
+    return (0, 0, 0, cleaned)
+
+def is_newer_version(latest_ver, current_ver):
+    return parse_version_tuple(latest_ver) > parse_version_tuple(current_ver)
+
+def check_for_updates():
+    print_banner()
+    print(f"\n  {BOLD}CHECK FOR UPDATES{RESET}")
+    print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
+    animated_loading("Connecting to GitHub release server...", 0.5)
+
+    latest_version = None
+    release_notes = ""
+    download_url = GITHUB_RAW_URL
+
+    req = urllib.request.Request(
+        GITHUB_API_RELEASE_URL,
+        headers={"User-Agent": f"UwawConnect/{__version__}"}
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode('utf-8'))
+                latest_version = data.get("tag_name", "").lstrip('v')
+                release_notes = data.get("body", "No release notes provided.")
+    except Exception:
+        # Fallback: check raw python file version constant
+        try:
+            raw_req = urllib.request.Request(
+                GITHUB_RAW_URL,
+                headers={"User-Agent": f"UwawConnect/{__version__}"}
+            )
+            with urllib.request.urlopen(raw_req, timeout=5) as raw_resp:
+                if raw_resp.status == 200:
+                    content = raw_resp.read().decode('utf-8')
+                    match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+                    if match:
+                        latest_version = match.group(1)
+        except Exception:
+            pass
+
+    if not latest_version:
+        print(f"\n  {RED}[!] Unable to reach update server (offline or repository un-released).{RESET}")
+        print(f"  {DIM}Working in offline mode. Current version: v{__version__}{RESET}\n")
+        input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
+        return
+
+    if is_newer_version(latest_version, __version__):
+        print(f"\n  {GREEN}[+] New Update Available!{RESET}")
+        print(f"  {DIM}Current Installed Version:{RESET} v{__version__}")
+        print(f"  {GREEN}{BOLD}Latest Remote Release:{RESET}    v{latest_version}")
+        if release_notes:
+            print(f"\n  {BOLD}Release Notes:{RESET}")
+            for line in release_notes.strip().splitlines()[:8]:
+                print(f"    {DIM}{line}{RESET}")
+        
+        print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
+        confirm = input(f"\n  {YELLOW}[?] Install update now (in-place)? [Y/n]: {RESET}").strip().lower()
+        if confirm in ('', 'y', 'yes'):
+            animated_loading(f"Downloading UwawConnect v{latest_version}...", 0.6)
+            try:
+                raw_req = urllib.request.Request(
+                    download_url,
+                    headers={"User-Agent": f"UwawConnect/{__version__}"}
+                )
+                with urllib.request.urlopen(raw_req, timeout=10) as resp:
+                    new_code = resp.read().decode('utf-8')
+                
+                target_path = os.path.abspath(sys.argv[0])
+                backup_path = target_path + ".bak"
+
+                # Backup existing script
+                with open(target_path, 'r', encoding='utf-8') as f:
+                    old_code = f.read()
+                with open(backup_path, 'w', encoding='utf-8') as f:
+                    f.write(old_code)
+
+                # Overwrite script
+                with open(target_path, 'w', encoding='utf-8') as f:
+                    f.write(new_code)
+
+                print(f"\n  {GREEN}[OK] Update completed successfully!{RESET}")
+                print(f"  {DIM}[SYS] Safety backup saved to {backup_path}{RESET}")
+                print(f"  {CYAN}[SYS] Restarting UwawConnect v{latest_version}...{RESET}\n")
+                time.sleep(1.2)
+                
+                # Re-exec process
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+            except Exception as e:
+                print(f"\n  {RED}[ERROR] Update failed:{RESET} {e}")
+                input(f"\n  {YELLOW}Press ENTER to return to main menu...{RESET}")
+    else:
+        print(f"\n  {GREEN}[OK] UwawConnect is up to date!{RESET}")
+        print(f"  {DIM}You are running the latest version (v{__version__}).{RESET}\n")
+        input(f"  {YELLOW}Press ENTER to return to main menu...{RESET}")
+
 def setup_menu():
     while True:
         print_banner()
@@ -170,15 +289,19 @@ def setup_menu():
         if not ports:
             print(f"  {RED}[!] No serial interfaces automatically detected.{RESET}")
             print(f"  {CYAN}[M]{RESET} Specify Custom Device Path...")
+            print(f"  {CYAN}[C]{RESET} Check for Updates (v{__version__})...")
             print(f"  {CYAN}[U]{RESET} Uninstall UwawConnect")
             print(f"  {CYAN}[Q]{RESET} Quit Application")
             print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
-            print(f"\n  {YELLOW}[>] Press key [M / U / Q]: {RESET}", end="", flush=True)
+            print(f"\n  {YELLOW}[>] Press key [M / C / U / Q]: {RESET}", end="", flush=True)
             choice = get_key().upper()
             print(choice)
             if choice == 'Q' or choice == '\x03':
                 print_goodbye()
                 sys.exit(0)
+            elif choice == 'C':
+                check_for_updates()
+                continue
             elif choice == 'U':
                 perform_uninstall()
                 continue
@@ -192,16 +315,20 @@ def setup_menu():
             for idx, port in enumerate(ports, 1):
                 print(f"  {CYAN}[{idx}]{RESET} {WHITE}{port}{RESET}")
             print(f"  {CYAN}[M]{RESET} {DIM}Specify Custom Device Path...{RESET}")
+            print(f"  {CYAN}[C]{RESET} {DIM}Check for Updates (v{__version__})...{RESET}")
             print(f"  {CYAN}[U]{RESET} {DIM}Uninstall UwawConnect...{RESET}")
             print(f"  {CYAN}[Q]{RESET} {DIM}Quit Application{RESET}")
             print(f"  {DIM}───────────────────────────────────────────────────────────────{RESET}")
             
-            print(f"\n  {YELLOW}[>] Press Key [1-{len(ports)} / M / U / Q]: {RESET}", end="", flush=True)
+            print(f"\n  {YELLOW}[>] Press Key [1-{len(ports)} / M / C / U / Q]: {RESET}", end="", flush=True)
             choice = get_key().upper()
             print(choice)
             if choice == 'Q' or choice == '\x03':
                 print_goodbye()
                 sys.exit(0)
+            elif choice == 'C':
+                check_for_updates()
+                continue
             elif choice == 'U':
                 perform_uninstall()
                 continue
