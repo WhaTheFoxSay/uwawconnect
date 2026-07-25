@@ -697,11 +697,10 @@ def run_session(port, baud):
         pad = max(0, width - 2 - vlen)
         return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
 
-    dash_cnt = max(0, 79 - 28 - len(CURRENT_THEME) - 2)
-    l1 = f"{CYAN}┌── SYSTEM SESSION ACTIVE [{WHITE}{BOLD}{CURRENT_THEME}{RESET}{CYAN}] {'─'*dash_cnt}┐{RESET}"
+    l1 = f"{CYAN}┌── SYSTEM SESSION ACTIVE ────────────────────────────────────────────────────┐{RESET}"
     l2_c = f" DEVICE: {WHITE}{port:<20}{RESET} {CYAN}│{RESET} SPEED: {YELLOW}{baud:<6}{RESET} bps {CYAN}│{RESET} MODE: {GREEN}8N1 RAW{RESET}"
     l3_c = f" HOTKEYS: {YELLOW}[Ctrl+A]{RESET} Cheat {CYAN}│{RESET} {YELLOW}[Ctrl+L]{RESET} Log {CYAN}│{RESET} {YELLOW}[Ctrl+B]{RESET} Backup {CYAN}│{RESET} {YELLOW}[Ctrl+P]{RESET} Playbook"
-    l4_c = f" CONTROL: {YELLOW}[Ctrl+F]{RESET} Break {CYAN}│{RESET} {YELLOW}[Ctrl+T]{RESET} Theme {CYAN}│{RESET} {YELLOW}[Ctrl+R]{CYAN} Menu {CYAN}│{RESET} {RED}[Ctrl+C]{RESET} Exit"
+    l4_c = f" CONTROL: {YELLOW}[Ctrl+F]{RESET} Break {CYAN}│{RESET} {YELLOW}[Ctrl+R]{CYAN} Menu {CYAN}│{RESET} {RED}[Ctrl+C]{RESET} Exit Session"
     l5 = f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}"
 
     status_bar = f"{l1}\n{make_box_line(l2_c)}\n{make_box_line(l3_c)}\n{make_box_line(l4_c)}\n{l5}\n"
