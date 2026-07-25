@@ -1,11 +1,11 @@
-# UwawConnect v1.3.0
+# UwawConnect v1.3.1
 
 > **Next-Generation Cross-Platform Serial Terminal Console Interface**  
 > Built for Network Engineers, Sysadmins, and Infrastructure Operations.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ UWAWCONNECT v1.3.0 ── Serial Console System (STABLE)                       │
+│ UWAWCONNECT v1.3.1 ── Serial Console System (STABLE)                       │
 │ Wownet Infrastructure Operating Console Interface                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```

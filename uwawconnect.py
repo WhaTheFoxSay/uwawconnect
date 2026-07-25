@@ -25,7 +25,7 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
@@ -210,22 +210,17 @@ def grab_running_config(ser, detected_vendor, port):
 
 def render_macro_overlay():
     """Lists files in ~/.uwaw/macros/ and injects chosen macro line-by-line to serial line."""
-    def make_box_line(content, width=79):
-        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
-        pad = max(0, width - 2 - vlen)
-        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
-
     ensure_uwaw_directories()
     macro_files = sorted([f for f in os.listdir(MACROS_DIR) if os.path.isfile(os.path.join(MACROS_DIR, f))])
     if not macro_files:
         sys.stdout.write(f"\r\n  {YELLOW}[SYS] No macro files found in {MACROS_DIR}{RESET}\r\n")
         return None
 
-    l1 = f"{CYAN}┌── AUTOMATION MACRO PLAYBOOKS [{BOLD}~/.uwaw/macros/{RESET}{CYAN}] ─────────────────────────┐{RESET}"
+    h1 = make_box_header(f"AUTOMATION MACRO PLAYBOOKS [{BOLD}~/.uwaw/macros/{RESET}{CYAN}]")
     l2_c = f" Select macro playbook [1-{len(macro_files)}] to execute, or [Q/ESC] to cancel:"
     l_sep = f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}"
 
-    print(f"\r\n\n{l1}")
+    print(f"\r\n\n{h1}")
     print(make_box_line(l2_c))
     print(l_sep)
     for idx, fname in enumerate(macro_files, 1):
@@ -250,11 +245,6 @@ def render_macro_overlay():
 
 def trigger_break_signal(ser):
     """Sends hardware UART Break signal and displays ROMMON / Password Recovery Reference."""
-    def make_box_line(content, width=79):
-        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
-        pad = max(0, width - 2 - vlen)
-        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
-
     sys.stdout.write(f"\r\n  {YELLOW}[SYS HARDWARE BREAK] Sending UART Break Signal (0.25s pulse)...{RESET}\r\n")
     sys.stdout.flush()
     try:
@@ -267,7 +257,7 @@ def trigger_break_signal(ser):
         except Exception as e:
             sys.stdout.write(f"  {RED}[ERROR] Hardware Break failed: {e}{RESET}\r\n")
 
-    b1 = f"{CYAN}┌── ROUTER & SWITCH PASSWORD RECOVERY QUICK REFERENCE ────────────────────────┐{RESET}"
+    b1 = make_box_header("ROUTER & SWITCH PASSWORD RECOVERY QUICK REFERENCE")
     b2_c = f" CISCO IOS ROMMON: {YELLOW}confreg 0x2142{RESET} -> {YELLOW}reset{RESET} (Bypasses startup-config)"
     b3_c = f" JUNIPER JUNOS:   {YELLOW}boot -s{RESET} -> {YELLOW}recovery{RESET} -> {YELLOW}set system root-authentication{RESET}"
     b4_c = f" MIKROTIK:        Hold Reset Button on Boot until User LED flashes"
@@ -275,6 +265,18 @@ def trigger_break_signal(ser):
 
     print(f"\r\n{b1}\n{make_box_line(b2_c)}\n{make_box_line(b3_c)}\n{make_box_line(b4_c)}\n{b5}\n")
     sys.stdout.flush()
+
+def make_box_header(title, width=79):
+    """Formats top border frame with title string truncated/padded to exact width."""
+    vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', title))
+    dash_count = max(0, width - 6 - vlen)
+    return f"{CYAN}┌── {title} {'─'*dash_count}┐{RESET}"
+
+def make_box_line(content, width=79):
+    """Formats middle frame line with left and right │ borders at exact width."""
+    vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
+    pad = max(0, width - 2 - vlen)
+    return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
 
 HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
 │ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
@@ -300,15 +302,20 @@ def get_key():
     if IS_WINDOWS:
         ch = msvcrt.getch()
         try:
-            return ch.decode('utf-8', errors='ignore')
+            k = ch.decode('utf-8', errors='ignore')
+            if k in ('\x1b', '\x03', 'q', 'Q'):
+                return 'Q'
+            return k
         except Exception:
-            return ''
+            return 'Q'
     else:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
             tty.setraw(fd)
             ch = sys.stdin.read(1)
+            if ch in ('\x1b', '\x03', 'q', 'Q'):
+                return 'Q'
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
@@ -436,20 +443,14 @@ def render_cheatsheet_overlay(detected_vendor=None):
     Allows user to select 1-N or press ESC/Q to return.
     Returns the selected command string (or None).
     """
-    def make_box_line(content, width=79):
-        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
-        pad = max(0, width - 2 - vlen)
-        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
-
     vendor_key = (detected_vendor if (detected_vendor in VENDOR_CHEATSHEETS) else "General / Standard").upper()
     commands = VENDOR_CHEATSHEETS.get(detected_vendor, VENDOR_CHEATSHEETS["General / Standard"])
 
-    dash_cnt = max(0, 79 - 33 - len(vendor_key))
-    l1 = f"{CYAN}┌── VENDOR QUICK CHEAT-SHEET [{BOLD}{vendor_key}{RESET}{CYAN}] {'─'*dash_cnt}┐{RESET}"
+    h1 = make_box_header(f"VENDOR QUICK CHEAT-SHEET [{BOLD}{vendor_key}{RESET}{CYAN}]")
     l2_c = f" Press key [1-{len(commands)}] to auto-inject command, or [Q/ESC] to cancel:"
     l_sep = f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}"
 
-    print(f"\r\n\n{l1}")
+    print(f"\r\n\n{h1}")
     print(make_box_line(l2_c))
     print(l_sep)
     for idx, (label, cmd) in enumerate(commands, 1):
@@ -692,18 +693,7 @@ def run_session(port, baud):
         return 'RESTART'
 
     clear_screen()
-    def make_box_line(content, width=79):
-        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
-        pad = max(0, width - 2 - vlen)
-        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
-
-    l1 = f"{CYAN}┌── SYSTEM SESSION ACTIVE ────────────────────────────────────────────────────┐{RESET}"
-    l2_c = f" DEVICE: {WHITE}{port:<20}{RESET} {CYAN}│{RESET} SPEED: {YELLOW}{baud:<6}{RESET} bps {CYAN}│{RESET} MODE: {GREEN}8N1 RAW{RESET}"
-    l3_c = f" HOTKEYS: {YELLOW}[Ctrl+A]{RESET} Cheat {CYAN}│{RESET} {YELLOW}[Ctrl+L]{RESET} Log {CYAN}│{RESET} {YELLOW}[Ctrl+B]{RESET} Backup {CYAN}│{RESET} {YELLOW}[Ctrl+P]{RESET} Playbook"
-    l4_c = f" CONTROL: {YELLOW}[Ctrl+F]{RESET} Break {CYAN}│{RESET} {YELLOW}[Ctrl+R]{CYAN} Menu {CYAN}│{RESET} {RED}[Ctrl+C]{RESET} Exit Session"
-    l5 = f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}"
-
-    status_bar = f"{l1}\n{make_box_line(l2_c)}\n{make_box_line(l3_c)}\n{make_box_line(l4_c)}\n{l5}\n"
+    status_bar = f"{make_box_header('SYSTEM SESSION ACTIVE')}\n{make_box_line(f' DEVICE: {WHITE}{port:<20}{RESET} {CYAN}│{RESET} SPEED: {YELLOW}{baud:<6}{RESET} bps {CYAN}│{RESET} MODE: {GREEN}8N1 RAW{RESET}')}\n{make_box_line(f' HOTKEYS: {YELLOW}[Ctrl+A]{RESET} Cheat {CYAN}│{RESET} {YELLOW}[Ctrl+L]{RESET} Log {CYAN}│{RESET} {YELLOW}[Ctrl+B]{RESET} Backup {CYAN}│{RESET} {YELLOW}[Ctrl+P]{RESET} Playbook')}\n{make_box_line(f' CONTROL: {YELLOW}[Ctrl+F]{RESET} Break {CYAN}│{RESET} {YELLOW}[Ctrl+R]{CYAN} Menu {CYAN}│{RESET} {RED}[Ctrl+C]{RESET} Exit Session')}\n{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n"
     print(status_bar)
     sys.stdout.write(f"{DIM}[SYS] Line ready. Press ENTER to wake target CLI prompt...{RESET}\n\n")
     sys.stdout.flush()
@@ -717,29 +707,26 @@ def run_session(port, baud):
 
     is_logging = False
     log_file_handle = None
-    log_file_path = None
+    log_file_path = ""
 
     def toggle_logging():
         nonlocal is_logging, log_file_handle, log_file_path
         if not is_logging:
             clean_port = os.path.basename(port).replace('/', '_')
-            ts = time.strftime("%Y%m%d_%H%M%S")
-            log_file_path = os.path.join(LOGS_DIR, f"session_{clean_port}_{ts}.log")
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            log_file_path = os.path.join(LOGS_DIR, f"session_{clean_port}_{timestamp}.log")
             try:
-                log_file_handle = open(log_file_path, "a", encoding="utf-8", errors="ignore")
-                log_file_handle.write(f"=== UwawConnect Session Log Started: {time.ctime()} ===\n")
-                log_file_handle.flush()
+                log_file_handle = open(log_file_path, "a", encoding="utf-8")
                 is_logging = True
-                sys.stdout.write(f"\r\n  {GREEN}[SYS LOGGING ENABLED]{RESET} {WHITE}{log_file_path}{RESET}\r\n")
+                sys.stdout.write(f"\r\n  {GREEN}[SYS LOGGING STARTED] Saving to: {log_file_path}{RESET}\r\n")
             except Exception as e:
-                sys.stdout.write(f"\r\n  {RED}[ERROR] Failed to start logging: {e}{RESET}\r\n")
+                sys.stdout.write(f"\r\n  {RED}[ERROR] Could not start session logging: {e}{RESET}\r\n")
         else:
             if log_file_handle:
-                log_file_handle.write(f"\n=== UwawConnect Session Log Ended: {time.ctime()} ===\n")
                 log_file_handle.close()
                 log_file_handle = None
             is_logging = False
-            sys.stdout.write(f"\r\n  {YELLOW}[SYS LOGGING DISABLED]{RESET}\r\n")
+            sys.stdout.write(f"\r\n  {YELLOW}[SYS LOGGING STOPPED] Log file closed.{RESET}\r\n")
         sys.stdout.flush()
 
     if IS_WINDOWS:
@@ -750,7 +737,7 @@ def run_session(port, baud):
             while True:
                 if msvcrt.kbhit():
                     ch = msvcrt.getch()
-                    if ch in (b'\x03', b'\x1d'): # Ctrl+C or Ctrl+]
+                    if ch == b'\x03': # Ctrl+C
                         action = 'QUIT'
                         break
                     elif ch == b'\x12': # Ctrl+R Menu
@@ -761,12 +748,20 @@ def run_session(port, baud):
                         if cmd:
                             ser.write(cmd.encode('utf-8'))
                             tx_bytes_total += len(cmd)
+                        else:
+                            ser.write(b'\r')
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == b'\x02': # Ctrl+B Backup Config
                         grab_running_config(ser, detected_vendor, port)
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == b'\x06': # Ctrl+F Break Signal
                         trigger_break_signal(ser)
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == b'\x0c': # Ctrl+L Toggle Log
                         toggle_logging()
@@ -778,9 +773,15 @@ def run_session(port, baud):
                                 ser.write((mline + "\r").encode('utf-8'))
                                 tx_bytes_total += len(mline) + 1
                                 time.sleep(0.3)
+                        else:
+                            ser.write(b'\r')
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == b'\x14': # Ctrl+T Theme Switcher
                         render_theme_overlay()
+                        clear_screen()
+                        print(status_bar)
                         continue
 
                     ser.write(ch)
@@ -861,6 +862,10 @@ def run_session(port, baud):
                         if cmd:
                             ser.write(cmd.encode('utf-8'))
                             tx_bytes_total += len(cmd)
+                        else:
+                            ser.write(b'\r')
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == '\x02':  # Ctrl+B Backup Config
                         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
@@ -868,6 +873,8 @@ def run_session(port, baud):
                             grab_running_config(ser, detected_vendor, port)
                         finally:
                             tty.setraw(sys.stdin.fileno())
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == '\x06':  # Ctrl+F Break Signal
                         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
@@ -875,6 +882,8 @@ def run_session(port, baud):
                             trigger_break_signal(ser)
                         finally:
                             tty.setraw(sys.stdin.fileno())
+                        clear_screen()
+                        print(status_bar)
                         continue
                     elif ch == '\x0c':  # Ctrl+L Toggle Log
                         toggle_logging()
@@ -890,13 +899,10 @@ def run_session(port, baud):
                                 ser.write((mline + "\r").encode('utf-8'))
                                 tx_bytes_total += len(mline) + 1
                                 time.sleep(0.3)
-                        continue
-                    elif ch == '\x14':  # Ctrl+T Theme Switcher
-                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-                        try:
-                            render_theme_overlay()
-                        finally:
-                            tty.setraw(sys.stdin.fileno())
+                        else:
+                            ser.write(b'\r')
+                        clear_screen()
+                        print(status_bar)
                         continue
 
                     ser.write(ch.encode('utf-8', errors='ignore'))
