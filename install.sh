@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# UwawConnect v1.1.2 Automated Self-Healing Installer (macOS, Linux, BSD, Solaris, Haiku OS)
+# UwawConnect v1.2.0 Automated Self-Healing Installer (macOS, Linux, BSD, Solaris, Haiku OS)
 # Wownet Network Infrastructure Operations
 # ==============================================================================
 
@@ -16,7 +16,7 @@ WHITE='\033[1;37m'
 
 echo -e "${CYAN}"
 echo "┌─────────────────────────────────────────────────────────────────────────────┐"
-echo "│ UWAWCONNECT v1.1.2 ── Automated Self-Healing Installer Script              │"
+echo "│ UWAWCONNECT v1.2.0 ── Automated Self-Healing Installer Script              │"
 echo "└─────────────────────────────────────────────────────────────────────────────┘"
 echo -e "${RESET}"
 
@@ -106,10 +106,10 @@ if ! python3 -c "import serial" 2>/dev/null; then
 fi
 echo -e "  ${GREEN}[OK]${RESET} PySerial dependency verified."
 
-# Step 3: Install binary executable
-echo -e "\n  ${CYAN}[3/3]${RESET} Installing UwawConnect binary..."
+# Step 3: Install binary executable and initialize directory structure
+echo -e "\n  ${CYAN}[3/3]${RESET} Installing UwawConnect binary & workspace directories..."
 TARGET_DIR="$HOME/.local/bin"
-mkdir -p "$TARGET_DIR"
+mkdir -p "$TARGET_DIR" "$HOME/.uwaw/logs" "$HOME/.uwaw/configs" "$HOME/.uwaw/macros"
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)/uwawconnect.py"
 
@@ -138,7 +138,7 @@ for RC in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
 done
 
 echo -e "\n${CYAN}┌─────────────────────────────────────────────────────────────────────────────┐${RESET}"
-echo -e "${CYAN}│ ${GREEN}[SUCCESS] UwawConnect v1.1.2 Installed Successfully!                       │${RESET}"
+echo -e "${CYAN}│ ${GREEN}[SUCCESS] UwawConnect v1.2.0 Installed Successfully!                       │${RESET}"
 echo -e "${CYAN}│ ${YELLOW}Run 'source ~/.zshrc' (or ~/.bashrc), then type:                             │${RESET}"
 echo -e "${CYAN}│ ${BOLD}${WHITE}uwaw${RESET}${CYAN}                                                                        │${RESET}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────────────────────┘${RESET}\n"

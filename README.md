@@ -1,11 +1,11 @@
-# ⚡ UwawConnect v1.1.2
+# ⚡ UwawConnect v1.2.0
 
 > **Next-Generation Cross-Platform Serial Terminal Console Interface**  
 > Built for Network Engineers, Sysadmins, and Infrastructure Operations.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ UWAWCONNECT v1.1.2 ── Serial Console System (STABLE)                       │
+│ UWAWCONNECT v1.2.0 ── Serial Console System (STABLE)                       │
 │ Wownet Infrastructure Operating Console Interface                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -15,6 +15,11 @@
 ## ✨ Features
 
 - **🌐 Universal Cross-Platform (macOS, Linux, BSD, Solaris, Haiku, Windows)**: Seamlessly operates on macOS (Intel/Apple Silicon), Linux (Debian, Ubuntu, RHEL, Arch, Alpine, Solus, Void, Gentoo, NixOS, Raspberry Pi OS), BSD (FreeBSD, OpenBSD, NetBSD), Solaris/Illumos, Haiku OS, and Windows 10/11 (`COM1`..`COM64`).
+- **🎨 Multi-Theme Color Engine**: Switch themes on-the-fly (`Ctrl + T`) between **Cyberpunk Neon**, **Win2K / NT 5.0 Server (Classic Royal Blue)**, **Matrix Green**, **Solarized Amber**, and **Dracula Purple**.
+- **📝 Real-Time Session Logging**: Toggle real-time log capturing (`Ctrl + L`) to `~/.uwaw/logs/` with automatic ANSI escape code stripping.
+- **💾 One-Click Running-Config Grabber**: Instantly export active hardware configuration (`Ctrl + B`) directly to clean `.cfg` files in `~/.uwaw/configs/`.
+- **⚡ Automation Macro Playbooks**: Execute multi-line provisioning scripts (`Ctrl + P`) from `~/.uwaw/macros/` with line-by-line pacing.
+- **🔨 Hardware Serial Break & Password Recovery**: Trigger physical UART Break signal (`Ctrl + F`) with an interactive ROMMON / Password Recovery wizard.
 - **🏷️ Vendor Auto-Detection**: Real-time banner signature detection for Cisco, MikroTik, Juniper, Fortinet, Huawei, VyOS, and Linux hardware.
 - **💡 Vendor Quick Command Cheat-Sheet**: Press `Ctrl + A` inside an active console session to launch an interactive ANSI box overlay for one-keypress command injection.
 - **📊 Real-Time RX/TX Metrics & Session Stats**: Tracks transmitted and received byte counts with a summary report upon session exit.
@@ -86,6 +91,11 @@ uwaw COM3 9600
 | Hotkey | Action |
 | :--- | :--- |
 | `Ctrl + A` | Open Vendor Diagnostic Cheat-Sheet overlay menu |
+| `Ctrl + B` | Export active running configuration to `~/.uwaw/configs/` |
+| `Ctrl + F` | Send Hardware Break signal & open Password Recovery wizard |
+| `Ctrl + L` | Toggle Real-Time Session Logging (`~/.uwaw/logs/`) |
+| `Ctrl + P` | Open Automation Macro Playbook runner (`~/.uwaw/macros/`) |
+| `Ctrl + T` | Open Terminal Color Theme Switcher (Win2K Server, Cyberpunk, Matrix, etc.) |
 | `Ctrl + R` | Return to setup menu (change baudrate or port) |
 | `Ctrl + C` | Instantly exit session / quit app (shows RX/TX stats summary) |
 | `Enter` | Send newline character to wake up target CLI prompt |

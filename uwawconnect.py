@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-UwawConnect v1.0.0 - Professional Terminal Serial Console Interface
-Architecture: Cross-Platform (macOS, Linux, BSD, Windows POSIX/Win32)
+UwawConnect v1.1.2 - Professional Terminal Serial Console Interface
+Architecture: Cross-Platform (macOS, Linux, BSD, Solaris, Haiku, Windows POSIX/Win32)
 Branding: Wownet High-Performance Operations
 License: GNU General Public License v3.0 (GPL-3.0)
 Copyright (C) 2026 Wownet Infrastructure Operations & Contributors
@@ -25,7 +25,7 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
@@ -93,6 +93,86 @@ VENDOR_CHEATSHEETS = {
     ]
 }
 
+# Directory Setup
+UWAW_BASE_DIR = os.path.expanduser("~/.uwaw")
+LOGS_DIR = os.path.join(UWAW_BASE_DIR, "logs")
+CONFIGS_DIR = os.path.join(UWAW_BASE_DIR, "configs")
+MACROS_DIR = os.path.join(UWAW_BASE_DIR, "macros")
+
+def ensure_uwaw_directories():
+    """Ensures ~/.uwaw log, config, and macro directories exist with default templates."""
+    for d in [LOGS_DIR, CONFIGS_DIR, MACROS_DIR]:
+        os.makedirs(d, exist_ok=True)
+    
+    sample_cisco = os.path.join(MACROS_DIR, "cisco_initial_setup.txt")
+    if not os.path.exists(sample_cisco):
+        try:
+            with open(sample_cisco, "w") as f:
+                f.write("# Cisco IOS Initial Setup Macro Template\n")
+                f.write("enable\n")
+                f.write("configure terminal\n")
+                f.write("no ip domain-lookup\n")
+                f.write("line con 0\n")
+                f.write(" logging synchronous\n")
+                f.write(" exec-timeout 0 0\n")
+                f.write("exit\n")
+                f.write("end\n")
+        except Exception:
+            pass
+
+    sample_mikrotik = os.path.join(MACROS_DIR, "mikrotik_initial_setup.txt")
+    if not os.path.exists(sample_mikrotik):
+        try:
+            with open(sample_mikrotik, "w") as f:
+                f.write("# MikroTik RouterOS Initial Setup Macro Template\n")
+                f.write("/system identity set name=UwawRouter\n")
+                f.write("/ip service disable telnet,ftp,www\n")
+        except Exception:
+            pass
+
+    sample_linux = os.path.join(MACROS_DIR, "linux_quick_diag.txt")
+    if not os.path.exists(sample_linux):
+        try:
+            with open(sample_linux, "w") as f:
+                f.write("# Linux Quick Diagnostic Macro Template\n")
+                f.write("uname -a\n")
+                f.write("ip a\n")
+                f.write("uptime\n")
+                f.write("df -h\n")
+        except Exception:
+            pass
+
+# Theme Engine & Palettes
+THEME_PALETTES = {
+    "Cyberpunk Neon": {
+        "CYAN": "\033[1;36m", "MAGENTA": "\033[1;35m", "GREEN": "\033[1;32m",
+        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
+        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
+    },
+    "Win2K / NT 5.0 Server": {
+        "CYAN": "\033[1;36;44m", "MAGENTA": "\033[1;35;44m", "GREEN": "\033[1;32;44m",
+        "YELLOW": "\033[1;33;44m", "RED": "\033[1;31;44m", "WHITE": "\033[1;37;44m",
+        "BOLD": "\033[1;44m", "DIM": "\033[2;44m", "RESET": "\033[0;44m", "BG": "\033[44m"
+    },
+    "Matrix Green": {
+        "CYAN": "\033[1;32m", "MAGENTA": "\033[0;32m", "GREEN": "\033[1;92m",
+        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
+        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
+    },
+    "Solarized Amber": {
+        "CYAN": "\033[1;33m", "MAGENTA": "\033[0;33m", "GREEN": "\033[1;33m",
+        "YELLOW": "\033[1;93m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
+        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
+    },
+    "Dracula Purple": {
+        "CYAN": "\033[1;35m", "MAGENTA": "\033[1;34m", "GREEN": "\033[1;32m",
+        "YELLOW": "\033[1;33m", "RED": "\033[1;31m", "WHITE": "\033[1;37m",
+        "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
+    }
+}
+
+CURRENT_THEME = "Cyberpunk Neon"
+
 # Professional ANSI Color Tokens
 CYAN = "\033[1;36m"
 MAGENTA = "\033[1;35m"
@@ -103,6 +183,147 @@ BOLD = "\033[1m"
 DIM = "\033[2m"
 RESET = "\033[0m"
 WHITE = "\033[1;37m"
+BG = ""
+
+def apply_theme(theme_name):
+    global CURRENT_THEME, CYAN, MAGENTA, GREEN, YELLOW, RED, WHITE, BOLD, DIM, RESET, BG, HEADER_BOX
+    if theme_name not in THEME_PALETTES:
+        theme_name = "Cyberpunk Neon"
+    CURRENT_THEME = theme_name
+    t = THEME_PALETTES[theme_name]
+    CYAN = t["CYAN"]
+    MAGENTA = t["MAGENTA"]
+    GREEN = t["GREEN"]
+    YELLOW = t["YELLOW"]
+    RED = t["RED"]
+    WHITE = t["WHITE"]
+    BOLD = t["BOLD"]
+    DIM = t["DIM"]
+    RESET = t["RESET"]
+    BG = t.get("BG", "")
+
+    HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
+│ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
+│ {DIM}Wownet Infrastructure Operating Console Interface{RESET}{CYAN}                     │
+└─────────────────────────────────────────────────────────────────────────────┘{RESET}"""
+
+def render_theme_overlay():
+    print(f"\r\n\n{CYAN}┌── 🎨 TERMINAL COLOR THEME SELECTOR ────────────────────────────────────────┐{RESET}")
+    print(f"{CYAN}│ {DIM}Select color theme style:{RESET}{CYAN}{' '*49}│{RESET}")
+    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
+    theme_list = list(THEME_PALETTES.keys())
+    for idx, tname in enumerate(theme_list, 1):
+        active_mark = f"{GREEN}★ ACTIVE{RESET}" if tname == CURRENT_THEME else ""
+        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{tname:<32}{RESET} {active_mark:<25} {CYAN}│{RESET}")
+    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
+    print(f"  {YELLOW}[>] Select Theme [1-{len(theme_list)} / Q]: {RESET}", end="", flush=True)
+
+    choice = get_key()
+    print(choice)
+    if choice.isdigit() and 1 <= int(choice) <= len(theme_list):
+        chosen_theme = theme_list[int(choice) - 1]
+        apply_theme(chosen_theme)
+        sys.stdout.write(f"\r\n  {GREEN}[SYS] Theme set to: {chosen_theme}{RESET}\r\n")
+        sys.stdout.flush()
+
+def strip_ansi_codes(text):
+    """Removes ANSI formatting escape sequences from raw string."""
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
+
+def grab_running_config(ser, detected_vendor, port):
+    """Auto-sends vendor config export command and captures output into ~/.uwaw/configs/."""
+    ensure_uwaw_directories()
+    cmd_map = {
+        "Cisco IOS / XE": "show running-config",
+        "MikroTik RouterOS": "/export compact",
+        "Juniper JunOS": "show configuration",
+        "Fortinet FortiOS": "show system interface",
+        "Huawei VRP": "display current-configuration",
+        "VyOS Router": "show configuration",
+        "Linux OS": "ip a && ip route"
+    }
+    cmd = cmd_map.get(detected_vendor, "show running-config")
+    clean_port = os.path.basename(port).replace('/', '_')
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    file_path = os.path.join(CONFIGS_DIR, f"config_{clean_port}_{timestamp}.cfg")
+
+    sys.stdout.write(f"\r\n  {YELLOW}[SYS CONFIG GRABBER] Requesting config via '{cmd}'...{RESET}\r\n")
+    sys.stdout.flush()
+    ser.write((cmd + "\r").encode('utf-8'))
+
+    time.sleep(0.5)
+    captured = ""
+    start_time = time.time()
+    while time.time() - start_time < 3.5:
+        if ser.in_waiting > 0:
+            data = ser.read(ser.in_waiting)
+            if data:
+                text = data.decode('utf-8', errors='ignore')
+                captured += text
+                if "--More--" in text or "---(more" in text:
+                    ser.write(b" ")
+        time.sleep(0.1)
+
+    clean_content = strip_ansi_codes(captured)
+    try:
+        with open(file_path, "w") as f:
+            f.write(f"# UwawConnect Config Export - Device: {port} | Vendor: {detected_vendor} | Date: {time.ctime()}\n")
+            f.write(clean_content)
+        sys.stdout.write(f"  {GREEN}[SYS SUCCESS] Config saved to: {file_path}{RESET}\r\n")
+    except Exception as e:
+        sys.stdout.write(f"  {RED}[ERROR] Failed to save config file: {e}{RESET}\r\n")
+    sys.stdout.flush()
+
+def render_macro_overlay():
+    """Lists files in ~/.uwaw/macros/ and injects chosen macro line-by-line to serial line."""
+    ensure_uwaw_directories()
+    macro_files = sorted([f for f in os.listdir(MACROS_DIR) if os.path.isfile(os.path.join(MACROS_DIR, f))])
+    if not macro_files:
+        sys.stdout.write(f"\r\n  {YELLOW}[SYS] No macro files found in {MACROS_DIR}{RESET}\r\n")
+        return None
+
+    print(f"\r\n\n{CYAN}┌── ⚡ AUTOMATION MACRO PLAYBOOKS [{WHITE}{BOLD}~/.uwaw/macros/{RESET}{CYAN}] ───────────┐{RESET}")
+    print(f"{CYAN}│ {DIM}Select macro playbook [1-{len(macro_files)}] to execute, or [Q/ESC] to cancel:{RESET}{CYAN}{' '*8}│{RESET}")
+    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
+    for idx, fname in enumerate(macro_files, 1):
+        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{fname:<68}{RESET} {CYAN}│{RESET}")
+    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
+    print(f"  {YELLOW}[>] Select Macro [1-{len(macro_files)} / Q]: {RESET}", end="", flush=True)
+
+    choice = get_key()
+    print(choice)
+    if choice.isdigit() and 1 <= int(choice) <= len(macro_files):
+        target_file = os.path.join(MACROS_DIR, macro_files[int(choice) - 1])
+        try:
+            with open(target_file, "r") as f:
+                lines = f.readlines()
+            sys.stdout.write(f"\r\n  {GREEN}[SYS MACRO] Executing {macro_files[int(choice)-1]} ({len(lines)} lines)...{RESET}\r\n")
+            sys.stdout.flush()
+            return [l.strip() for l in lines if l.strip() and not l.strip().startswith('#')]
+        except Exception as e:
+            sys.stdout.write(f"\r\n  {RED}[ERROR] Failed to read macro: {e}{RESET}\r\n")
+    return None
+
+def trigger_break_signal(ser):
+    """Sends hardware UART Break signal and displays ROMMON / Password Recovery ANSI Wizard."""
+    sys.stdout.write(f"\r\n  {YELLOW}[SYS HARDWARE BREAK] Sending UART Break Signal (0.25s pulse)...{RESET}\r\n")
+    sys.stdout.flush()
+    try:
+        ser.send_break(0.25)
+    except Exception:
+        try:
+            ser.break_condition = True
+            time.sleep(0.25)
+            ser.break_condition = False
+        except Exception as e:
+            sys.stdout.write(f"  {RED}[ERROR] Hardware Break failed: {e}{RESET}\r\n")
+
+    print(f"\r\n{CYAN}┌── 🔨 ROUTER & SWITCH PASSWORD RECOVERY QUICK REFERENCE ────────────────────┐{RESET}")
+    print(f"{CYAN}│ {WHITE}CISCO IOS ROMMON:{RESET} {YELLOW}confreg 0x2142{RESET} -> {YELLOW}reset{RESET} (Bypasses startup-config)   {CYAN}│{RESET}")
+    print(f"{CYAN}│ {WHITE}JUNIPER JUNOS:{RESET}   {YELLOW}boot -s{RESET} -> {YELLOW}recovery{RESET} -> {YELLOW}set system root-authentication{RESET}   {CYAN}│{RESET}")
+    print(f"{CYAN}│ {WHITE}MIKROTIK:{RESET}        Hold Reset Button on Boot until User LED flashes           {CYAN}│{RESET}")
+    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
 HEADER_BOX = f"""{CYAN}┌─────────────────────────────────────────────────────────────────────────────┐
 │ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
@@ -492,6 +713,7 @@ def run_session(port, baud):
         os.system("pip3 install pyserial --break-system-packages >/dev/null 2>&1")
         import serial
 
+    ensure_uwaw_directories()
     print_banner()
     animated_loading(f"Releasing port lock for {port}...", 0.3)
     if not IS_WINDOWS:
@@ -509,9 +731,10 @@ def run_session(port, baud):
 
     clear_screen()
     status_bar = (
-        f"{CYAN}┌── SYSTEM SESSION ACTIVE ───────────────────────────────────────────────────┐\n"
+        f"{CYAN}┌── SYSTEM SESSION ACTIVE [{WHITE}{BOLD}{CURRENT_THEME}{RESET}{CYAN}] ──────────────────────────────────┐\n"
         f"│ DEVICE: {WHITE}{port:<22}{CYAN} │ SPEED: {YELLOW}{baud:<7} bps{CYAN} │ MODE: {GREEN}8N1 RAW{CYAN} │\n"
-        f"│ CONTROLS: {YELLOW}[Ctrl+A]{CYAN} CheatSheet │ {YELLOW}[Ctrl+R]{CYAN} Menu │ {RED}[Ctrl+C]{CYAN} Exit                      │\n"
+        f"│ HOTKEYS: {YELLOW}[Ctrl+A]{CYAN} CheatSheet │ {YELLOW}[Ctrl+L]{CYAN} Log │ {YELLOW}[Ctrl+B]{CYAN} Backup │ {YELLOW}[Ctrl+P]{CYAN} Playbook│\n"
+        f"│ CONTROL: {YELLOW}[Ctrl+F]{CYAN} Break/Recover │ {YELLOW}[Ctrl+T]{CYAN} Theme │ {YELLOW}[Ctrl+R]{CYAN} Menu │ {RED}[Ctrl+C]{CYAN} Exit  │\n"
         f"└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n"
     )
     print(status_bar)
@@ -525,6 +748,33 @@ def run_session(port, baud):
     rx_buffer_text = ""
     detected_vendor = None
 
+    is_logging = False
+    log_file_handle = None
+    log_file_path = None
+
+    def toggle_logging():
+        nonlocal is_logging, log_file_handle, log_file_path
+        if not is_logging:
+            clean_port = os.path.basename(port).replace('/', '_')
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            log_file_path = os.path.join(LOGS_DIR, f"session_{clean_port}_{ts}.log")
+            try:
+                log_file_handle = open(log_file_path, "a", encoding="utf-8", errors="ignore")
+                log_file_handle.write(f"=== UwawConnect Session Log Started: {time.ctime()} ===\n")
+                log_file_handle.flush()
+                is_logging = True
+                sys.stdout.write(f"\r\n  {GREEN}[SYS LOGGING ENABLED]{RESET} {WHITE}{log_file_path}{RESET}\r\n")
+            except Exception as e:
+                sys.stdout.write(f"\r\n  {RED}[ERROR] Failed to start logging: {e}{RESET}\r\n")
+        else:
+            if log_file_handle:
+                log_file_handle.write(f"\n=== UwawConnect Session Log Ended: {time.ctime()} ===\n")
+                log_file_handle.close()
+                log_file_handle = None
+            is_logging = False
+            sys.stdout.write(f"\r\n  {YELLOW}[SYS LOGGING DISABLED]{RESET}\r\n")
+        sys.stdout.flush()
+
     if IS_WINDOWS:
         last_recv_time = time.time()
         has_received_data = False
@@ -536,7 +786,7 @@ def run_session(port, baud):
                     if ch in (b'\x03', b'\x1d'): # Ctrl+C or Ctrl+]
                         action = 'QUIT'
                         break
-                    elif ch == b'\x12': # Ctrl+R
+                    elif ch == b'\x12': # Ctrl+R Menu
                         action = 'RESTART'
                         break
                     elif ch == b'\x01': # Ctrl+A CheatSheet
@@ -544,6 +794,26 @@ def run_session(port, baud):
                         if cmd:
                             ser.write(cmd.encode('utf-8'))
                             tx_bytes_total += len(cmd)
+                        continue
+                    elif ch == b'\x02': # Ctrl+B Backup Config
+                        grab_running_config(ser, detected_vendor, port)
+                        continue
+                    elif ch == b'\x06': # Ctrl+F Break Signal
+                        trigger_break_signal(ser)
+                        continue
+                    elif ch == b'\x0c': # Ctrl+L Toggle Log
+                        toggle_logging()
+                        continue
+                    elif ch == b'\x10': # Ctrl+P Playbook / Macro
+                        macro_cmds = render_macro_overlay()
+                        if macro_cmds:
+                            for mline in macro_cmds:
+                                ser.write((mline + "\r").encode('utf-8'))
+                                tx_bytes_total += len(mline) + 1
+                                time.sleep(0.3)
+                        continue
+                    elif ch == b'\x14': # Ctrl+T Theme Switcher
+                        render_theme_overlay()
                         continue
 
                     ser.write(ch)
@@ -558,8 +828,13 @@ def run_session(port, baud):
                         sys.stdout.buffer.write(data)
                         sys.stdout.buffer.flush()
 
+                        text = data.decode('utf-8', errors='ignore')
+                        if is_logging and log_file_handle:
+                            log_file_handle.write(strip_ansi_codes(text))
+                            log_file_handle.flush()
+
                         if detected_vendor is None:
-                            rx_buffer_text += data.decode('utf-8', errors='ignore')
+                            rx_buffer_text += text
                             if len(rx_buffer_text) > 4096:
                                 rx_buffer_text = rx_buffer_text[-4096:]
                             v = detect_vendor(rx_buffer_text)
@@ -579,15 +854,19 @@ def run_session(port, baud):
         except KeyboardInterrupt:
             action = 'QUIT'
         finally:
+            if is_logging and log_file_handle:
+                log_file_handle.close()
             ser.close()
             vendor_disp = detected_vendor if detected_vendor else "Generic / Unknown"
+            log_disp = log_file_path if is_logging else "Disabled"
             print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
             print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
             print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}SESSION THEME:{RESET} {CYAN}{CURRENT_THEME:<15}{RESET} │ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<27}{CYAN}│{RESET}")
             print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
     else:
-        # POSIX (macOS & Linux & BSD)
+        # POSIX (macOS & Linux & BSD & Solaris & Haiku)
         old_settings = termios.tcgetattr(sys.stdin)
         last_recv_time = time.time()
         has_received_data = False
@@ -603,7 +882,7 @@ def run_session(port, baud):
                     if ch == '\x03':  # Ctrl+C
                         action = 'QUIT'
                         break
-                    elif ch == '\x12':  # Ctrl+R
+                    elif ch == '\x12':  # Ctrl+R Menu
                         action = 'RESTART'
                         break
                     elif ch == '\x01':  # Ctrl+A CheatSheet
@@ -615,6 +894,42 @@ def run_session(port, baud):
                         if cmd:
                             ser.write(cmd.encode('utf-8'))
                             tx_bytes_total += len(cmd)
+                        continue
+                    elif ch == '\x02':  # Ctrl+B Backup Config
+                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                        try:
+                            grab_running_config(ser, detected_vendor, port)
+                        finally:
+                            tty.setraw(sys.stdin.fileno())
+                        continue
+                    elif ch == '\x06':  # Ctrl+F Break Signal
+                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                        try:
+                            trigger_break_signal(ser)
+                        finally:
+                            tty.setraw(sys.stdin.fileno())
+                        continue
+                    elif ch == '\x0c':  # Ctrl+L Toggle Log
+                        toggle_logging()
+                        continue
+                    elif ch == '\x10':  # Ctrl+P Playbook / Macro
+                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                        try:
+                            macro_cmds = render_macro_overlay()
+                        finally:
+                            tty.setraw(sys.stdin.fileno())
+                        if macro_cmds:
+                            for mline in macro_cmds:
+                                ser.write((mline + "\r").encode('utf-8'))
+                                tx_bytes_total += len(mline) + 1
+                                time.sleep(0.3)
+                        continue
+                    elif ch == '\x14':  # Ctrl+T Theme Switcher
+                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                        try:
+                            render_theme_overlay()
+                        finally:
+                            tty.setraw(sys.stdin.fileno())
                         continue
 
                     ser.write(ch.encode('utf-8', errors='ignore'))
@@ -629,8 +944,13 @@ def run_session(port, baud):
                         sys.stdout.buffer.write(data)
                         sys.stdout.buffer.flush()
 
+                        text = data.decode('utf-8', errors='ignore')
+                        if is_logging and log_file_handle:
+                            log_file_handle.write(strip_ansi_codes(text))
+                            log_file_handle.flush()
+
                         if detected_vendor is None:
-                            rx_buffer_text += data.decode('utf-8', errors='ignore')
+                            rx_buffer_text += text
                             if len(rx_buffer_text) > 4096:
                                 rx_buffer_text = rx_buffer_text[-4096:]
                             v = detect_vendor(rx_buffer_text)
@@ -651,11 +971,15 @@ def run_session(port, baud):
             action = 'QUIT'
         finally:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+            if is_logging and log_file_handle:
+                log_file_handle.close()
             ser.close()
             vendor_disp = detected_vendor if detected_vendor else "Generic / Unknown"
+            log_disp = os.path.basename(log_file_path) if is_logging and log_file_path else "Disabled"
             print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
             print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
             print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}SESSION THEME:{RESET} {CYAN}{CURRENT_THEME:<15}{RESET} │ {WHITE}LOGGING:{RESET} {GREEN}{log_disp:<27}{CYAN}│{RESET}")
             print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
     return action
