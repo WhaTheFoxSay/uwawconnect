@@ -171,24 +171,40 @@ THEME_PALETTES = {
     }
 }
 
-CURRENT_THEME = "Cyberpunk Neon"
+CURRENT_THEME = "Win2K / NT 5.0 Server"
 
 # Professional ANSI Color Tokens
-CYAN = "\033[1;36m"
-MAGENTA = "\033[1;35m"
-GREEN = "\033[1;32m"
-YELLOW = "\033[1;33m"
-RED = "\033[1;31m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-RESET = "\033[0m"
-WHITE = "\033[1;37m"
-BG = ""
+CYAN = "\033[1;36;44m"
+MAGENTA = "\033[1;35;44m"
+GREEN = "\033[1;32;44m"
+YELLOW = "\033[1;33;44m"
+RED = "\033[1;31;44m"
+BOLD = "\033[1;44m"
+DIM = "\033[2;44m"
+RESET = "\033[0;44m"
+WHITE = "\033[1;37;44m"
+BG = "\033[44m"
 
-def apply_theme(theme_name):
+CONFIG_FILE = os.path.join(UWAW_BASE_DIR, "config.json")
+
+def load_persistent_theme():
+    """Loads saved theme preference from ~/.uwaw/config.json."""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+                saved_theme = data.get("theme")
+                if saved_theme in THEME_PALETTES:
+                    apply_theme(saved_theme, save=False)
+                    return
+        except Exception:
+            pass
+    apply_theme("Win2K / NT 5.0 Server", save=False)
+
+def apply_theme(theme_name, save=True):
     global CURRENT_THEME, CYAN, MAGENTA, GREEN, YELLOW, RED, WHITE, BOLD, DIM, RESET, BG, HEADER_BOX
     if theme_name not in THEME_PALETTES:
-        theme_name = "Cyberpunk Neon"
+        theme_name = "Win2K / NT 5.0 Server"
     CURRENT_THEME = theme_name
     t = THEME_PALETTES[theme_name]
     CYAN = t["CYAN"]
@@ -206,6 +222,14 @@ def apply_theme(theme_name):
 │ {WHITE}{BOLD}UWAWCONNECT v{__version__}{RESET}{CYAN} ── Serial Console System ({GREEN}{__release_channel__.upper()}{CYAN})                 │
 │ {DIM}Wownet Infrastructure Operating Console Interface{RESET}{CYAN}                     │
 └─────────────────────────────────────────────────────────────────────────────┘{RESET}"""
+
+    if save:
+        ensure_uwaw_directories()
+        try:
+            with open(CONFIG_FILE, "w") as f:
+                json.dump({"theme": theme_name}, f)
+        except Exception:
+            pass
 
 def render_theme_overlay():
     print(f"\r\n\n{CYAN}┌── 🎨 TERMINAL COLOR THEME SELECTOR ────────────────────────────────────────┐{RESET}")
@@ -987,6 +1011,7 @@ def run_session(port, baud):
     return action
 
 def main():
+    load_persistent_theme()
     while True:
         if len(sys.argv) >= 2:
             port = sys.argv[1]
