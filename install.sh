@@ -44,6 +44,15 @@ if ! command -v python3 &> /dev/null; then
     elif command -v brew &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected macOS (Homebrew). Installing python3...${RESET}"
         brew install python3
+    elif command -v pkg &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected FreeBSD (pkg). Installing python3...${RESET}"
+        $SUDO_CMD pkg install -y python3 2>/dev/null || true
+    elif command -v pkg_add &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected OpenBSD (pkg_add). Installing python3...${RESET}"
+        $SUDO_CMD pkg_add python3 2>/dev/null || true
+    elif command -v pkgin &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected NetBSD (pkgin). Installing python3...${RESET}"
+        $SUDO_CMD pkgin -y install python3 2>/dev/null || true
     else
         echo -e "  ${RED}[ERROR] Package manager not recognized. Please install python3 manually.${RESET}"
         exit 1
@@ -70,6 +79,8 @@ if ! python3 -c "import serial" 2>/dev/null; then
             $SUDO_CMD dnf install -y -q python3-pyserial 2>/dev/null || true
         elif command -v yum &> /dev/null; then
             $SUDO_CMD yum install -y -q python3-pyserial 2>/dev/null || true
+        elif command -v pkg &> /dev/null; then
+            $SUDO_CMD pkg install -y py311-pyserial 2>/dev/null || true
         fi
     fi
 fi

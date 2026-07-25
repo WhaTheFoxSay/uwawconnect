@@ -102,12 +102,20 @@ def find_serial_ports():
                 ports.append(f"COM{i}")
     else:
         patterns = [
+            # macOS (Darwin BSD)
             '/dev/cu.usbserial*',
             '/dev/tty.usbserial*',
             '/dev/cu.usbmodem*',
             '/dev/tty.usbmodem*',
             '/dev/cu.SLAB*',
-            '/dev/cu.wch*'
+            '/dev/cu.wch*',
+            # Linux (Standard & USB ACM)
+            '/dev/ttyUSB*',
+            '/dev/ttyACM*',
+            # BSD (FreeBSD, OpenBSD, NetBSD)
+            '/dev/cuaU*',
+            '/dev/cuau*',
+            '/dev/ttyU*'
         ]
         for pattern in patterns:
             ports.extend(glob.glob(pattern))
