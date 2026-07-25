@@ -25,7 +25,7 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
@@ -150,9 +150,16 @@ THEME_PALETTES = {
         "BOLD": "\033[1m", "DIM": "\033[2m", "RESET": "\033[0m", "BG": ""
     },
     "Win2K / NT 5.0 Server": {
-        "CYAN": "\033[1;36;44m", "MAGENTA": "\033[1;35;44m", "GREEN": "\033[1;32;44m",
-        "YELLOW": "\033[1;33;44m", "RED": "\033[1;31;44m", "WHITE": "\033[1;37;44m",
-        "BOLD": "\033[1;44m", "DIM": "\033[2;44m", "RESET": "\033[0;44m", "BG": "\033[44m"
+        "CYAN": "\033[1;36m",       # Tochka Teal / Windows 2000 Cyan-Green
+        "MAGENTA": "\033[1;35m",
+        "GREEN": "\033[1;32m",     # High-Contrast Mint Green
+        "YELLOW": "\033[1;33m",    # High-Contrast Amber Yellow
+        "RED": "\033[1;31m",       # High-Contrast Red
+        "WHITE": "\033[1;37m",     # Crisp White
+        "BOLD": "\033[1m",
+        "DIM": "\033[2m",
+        "RESET": "\033[0m",
+        "BG": ""
     },
     "Matrix Green": {
         "CYAN": "\033[1;32m", "MAGENTA": "\033[0;32m", "GREEN": "\033[1;92m",
@@ -174,16 +181,16 @@ THEME_PALETTES = {
 CURRENT_THEME = "Win2K / NT 5.0 Server"
 
 # Professional ANSI Color Tokens
-CYAN = "\033[1;36;44m"
-MAGENTA = "\033[1;35;44m"
-GREEN = "\033[1;32;44m"
-YELLOW = "\033[1;33;44m"
-RED = "\033[1;31;44m"
-BOLD = "\033[1;44m"
-DIM = "\033[2;44m"
-RESET = "\033[0;44m"
-WHITE = "\033[1;37;44m"
-BG = "\033[44m"
+CYAN = "\033[1;36m"
+MAGENTA = "\033[1;35m"
+GREEN = "\033[1;32m"
+YELLOW = "\033[1;33m"
+RED = "\033[1;31m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+WHITE = "\033[1;37m"
+BG = ""
 
 CONFIG_FILE = os.path.join(UWAW_BASE_DIR, "config.json")
 
@@ -754,13 +761,19 @@ def run_session(port, baud):
         return 'RESTART'
 
     clear_screen()
-    status_bar = (
-        f"{CYAN}┌── SYSTEM SESSION ACTIVE [{WHITE}{BOLD}{CURRENT_THEME}{RESET}{CYAN}] ──────────────────────────────────┐\n"
-        f"│ DEVICE: {WHITE}{port:<22}{CYAN} │ SPEED: {YELLOW}{baud:<7} bps{CYAN} │ MODE: {GREEN}8N1 RAW{CYAN} │\n"
-        f"│ HOTKEYS: {YELLOW}[Ctrl+A]{CYAN} CheatSheet │ {YELLOW}[Ctrl+L]{CYAN} Log │ {YELLOW}[Ctrl+B]{CYAN} Backup │ {YELLOW}[Ctrl+P]{CYAN} Playbook│\n"
-        f"│ CONTROL: {YELLOW}[Ctrl+F]{CYAN} Break/Recover │ {YELLOW}[Ctrl+T]{CYAN} Theme │ {YELLOW}[Ctrl+R]{CYAN} Menu │ {RED}[Ctrl+C]{CYAN} Exit  │\n"
-        f"└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n"
-    )
+    def make_box_line(content, width=79):
+        vlen = len(re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', content))
+        pad = max(0, width - 2 - vlen)
+        return f"{CYAN}│{RESET}{content}{' '*pad}{CYAN}│{RESET}"
+
+    dash_cnt = max(0, 79 - 28 - len(CURRENT_THEME) - 2)
+    l1 = f"{CYAN}┌── SYSTEM SESSION ACTIVE [{WHITE}{BOLD}{CURRENT_THEME}{RESET}{CYAN}] {'─'*dash_cnt}┐{RESET}"
+    l2_c = f" DEVICE: {WHITE}{port:<20}{RESET} {CYAN}│{RESET} SPEED: {YELLOW}{baud:<6}{RESET} bps {CYAN}│{RESET} MODE: {GREEN}8N1 RAW{RESET}"
+    l3_c = f" HOTKEYS: {YELLOW}[Ctrl+A]{RESET} Cheat {CYAN}│{RESET} {YELLOW}[Ctrl+L]{RESET} Log {CYAN}│{RESET} {YELLOW}[Ctrl+B]{RESET} Backup {CYAN}│{RESET} {YELLOW}[Ctrl+P]{RESET} Playbook"
+    l4_c = f" CONTROL: {YELLOW}[Ctrl+F]{RESET} Break {CYAN}│{RESET} {YELLOW}[Ctrl+T]{RESET} Theme {CYAN}│{RESET} {YELLOW}[Ctrl+R]{CYAN} Menu {CYAN}│{RESET} {RED}[Ctrl+C]{RESET} Exit"
+    l5 = f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}"
+
+    status_bar = f"{l1}\n{make_box_line(l2_c)}\n{make_box_line(l3_c)}\n{make_box_line(l4_c)}\n{l5}\n"
     print(status_bar)
     sys.stdout.write(f"{DIM}[SYS] Line ready. Press ENTER to wake target CLI prompt...{RESET}\n\n")
     sys.stdout.flush()

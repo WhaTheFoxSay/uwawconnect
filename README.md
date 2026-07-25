@@ -1,11 +1,11 @@
-# ⚡ UwawConnect v1.2.0
+# ⚡ UwawConnect v1.2.1
 
 > **Next-Generation Cross-Platform Serial Terminal Console Interface**  
 > Built for Network Engineers, Sysadmins, and Infrastructure Operations.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ UWAWCONNECT v1.2.0 ── Serial Console System (STABLE)                       │
+│ UWAWCONNECT v1.2.1 ── Serial Console System (STABLE)                       │
 │ Wownet Infrastructure Operating Console Interface                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -15,7 +15,8 @@
 ## ✨ Features
 
 - **🌐 Universal Cross-Platform (macOS, Linux, BSD, Solaris, Haiku, Windows)**: Seamlessly operates on macOS (Intel/Apple Silicon), Linux (Debian, Ubuntu, RHEL, Arch, Alpine, Solus, Void, Gentoo, NixOS, Raspberry Pi OS), BSD (FreeBSD, OpenBSD, NetBSD), Solaris/Illumos, Haiku OS, and Windows 10/11 (`COM1`..`COM64`).
-- **🎨 Multi-Theme Color Engine**: Switch themes on-the-fly (`Ctrl + T`) between **Cyberpunk Neon**, **Win2K / NT 5.0 Server (Classic Royal Blue)**, **Matrix Green**, **Solarized Amber**, and **Dracula Purple**.
+- **🎨 Multi-Theme Color Engine**: Switch themes on-the-fly (`Ctrl + T`) between **Win2K / NT 5.0 Server (Tochka Teal)**, **Cyberpunk Neon**, **Matrix Green**, **Solarized Amber**, and **Dracula Purple**.
+- **📐 Pixel-Perfect Grid Box Formatter**: Dynamically aligns all status frames and box borders without screen overflow or line breaking.
 - **📝 Real-Time Session Logging**: Toggle real-time log capturing (`Ctrl + L`) to `~/.uwaw/logs/` with automatic ANSI escape code stripping.
 - **💾 One-Click Running-Config Grabber**: Instantly export active hardware configuration (`Ctrl + B`) directly to clean `.cfg` files in `~/.uwaw/configs/`.
 - **⚡ Automation Macro Playbooks**: Execute multi-line provisioning scripts (`Ctrl + P`) from `~/.uwaw/macros/` with line-by-line pacing.
