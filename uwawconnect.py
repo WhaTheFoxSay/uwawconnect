@@ -25,13 +25,73 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
 REPO_NAME = "uwawconnect"
 GITHUB_API_RELEASE_URL = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
 GITHUB_RAW_URL = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/main/uwawconnect.py"
+
+# Vendor Detection Signatures (Regex match patterns against incoming serial output)
+VENDOR_SIGNATURES = [
+    ("MikroTik RouterOS", [r"RouterOS", r"MikroTik", r"\[[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+\]"]),
+    ("Cisco IOS / XE", [r"Cisco IOS", r"Cisco Nexus", r"Cisco Systems", r"User Access Verification", r"Line con0 is now available"]),
+    ("Juniper JunOS", [r"JUNOS", r"Juniper Networks", r"root@[a-zA-Z0-9_-]+>", r"%-"]),
+    ("Fortinet FortiOS", [r"FortiGate", r"FortiOS", r"Welcome to FortiGate"]),
+    ("Huawei VRP", [r"Huawei Versatile Routing Platform", r"<HUAWEI>", r"<[a-zA-Z0-9_-]+>"]),
+    ("VyOS Router", [r"VyOS", r"vyos@[a-zA-Z0-9_-]+:"]),
+    ("Linux OS", [r"Linux", r"Ubuntu", r"Debian", r"AlmaLinux", r"RHEL", r"Alpine", r"Raspbian"])
+]
+
+# Vendor Diagnostic Cheat-Sheet Command Presets
+VENDOR_CHEATSHEETS = {
+    "Cisco IOS / XE": [
+        ("Show IP Interface Brief", "show ip interface brief"),
+        ("Show Running Configuration", "show running-config"),
+        ("Show Hardware & System Version", "show version"),
+        ("Show IP Routing Table", "show ip route"),
+        ("Show Connected CDP Neighbors", "show cdp neighbors"),
+    ],
+    "MikroTik RouterOS": [
+        ("Print IP Interfaces & Addresses", "/ip address print"),
+        ("Print Full System Export (Compact)", "/export compact"),
+        ("Print CPU & System Resources", "/system resource print"),
+        ("Print Active Interface Status", "/interface print"),
+        ("Print IP Routing Table", "/ip route print"),
+    ],
+    "Juniper JunOS": [
+        ("Show Interfaces Terse", "show interfaces terse"),
+        ("Show Configuration System", "show configuration"),
+        ("Show IP Routing Table", "show route"),
+        ("Show System Information", "show system information"),
+        ("Show LLDP Neighbors", "show lldp neighbors"),
+    ],
+    "Fortinet FortiOS": [
+        ("Get System Status", "get system status"),
+        ("Show System Interface", "show system interface"),
+        ("Get Routing Table", "get router info routing-table all"),
+        ("Get Hardware Performance", "get system performance status"),
+    ],
+    "Huawei VRP": [
+        ("Display IP Interface Brief", "display ip interface brief"),
+        ("Display Current Configuration", "display current-configuration"),
+        ("Display Version Info", "display version"),
+        ("Display IP Routing Table", "display ip routing-table"),
+    ],
+    "Linux OS": [
+        ("Show Network Interfaces & IPs", "ip a"),
+        ("Show IP Routing Table", "ip route"),
+        ("Show System Resource Usage", "free -h && df -h"),
+        ("Show Kernel Messages (Dmesg)", "dmesg -T | tail -n 20"),
+    ],
+    "General / Standard": [
+        ("Show IP Interface Summary", "show ip interface brief"),
+        ("Show System Status / Version", "show version"),
+        ("Show Running Configuration", "show running-config"),
+        ("Print IP Addresses (Linux/MikroTik)", "ip a"),
+    ]
+}
 
 # Professional ANSI Color Tokens
 CYAN = "\033[1;36m"
@@ -176,6 +236,49 @@ def perform_uninstall():
 
     print_uninstall_goodbye()
     sys.exit(0)
+
+def detect_vendor(accumulated_text):
+    """Inspects text buffer for vendor signatures and returns detected vendor string or None."""
+    for vendor_name, patterns in VENDOR_SIGNATURES:
+        for pat in patterns:
+            if re.search(pat, accumulated_text, re.IGNORECASE):
+                return vendor_name
+    return None
+
+def format_bytes(n_bytes):
+    """Formats byte counts into human-readable strings (e.g. 1.2 KB, 3.4 MB)."""
+    if n_bytes < 1024:
+        return f"{n_bytes} B"
+    elif n_bytes < 1024 * 1024:
+        return f"{n_bytes / 1024:.1f} KB"
+    else:
+        return f"{n_bytes / (1024 * 1024):.1f} MB"
+
+def render_cheatsheet_overlay(detected_vendor=None):
+    """
+    Renders ANSI box overlay displaying vendor-specific command shortcuts.
+    Allows user to select 1-N or press ESC/Q to return.
+    Returns the selected command string (or None).
+    """
+    vendor_key = detected_vendor if (detected_vendor in VENDOR_CHEATSHEETS) else "General / Standard"
+    commands = VENDOR_CHEATSHEETS[vendor_key]
+
+    print(f"\r\n\n{CYAN}┌── 💡 VENDOR QUICK CHEAT-SHEET [{WHITE}{BOLD}{vendor_key.upper()}{RESET}{CYAN}] ─────────────────────┐{RESET}")
+    print(f"{CYAN}│ {DIM}Press key [1-{len(commands)}] to auto-inject command, or [Q/ESC] to cancel:{RESET}{CYAN}{' '*12}│{RESET}")
+    print(f"{CYAN}├─────────────────────────────────────────────────────────────────────────────┤{RESET}")
+    for idx, (label, cmd) in enumerate(commands, 1):
+        print(f"{CYAN}│ {CYAN}[{idx}]{RESET} {WHITE}{label:<34}{RESET} {YELLOW}➔ {cmd:<28}{RESET} {CYAN}│{RESET}")
+    print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}")
+    print(f"  {YELLOW}[>] Select Command [1-{len(commands)} / Q]: {RESET}", end="", flush=True)
+
+    choice = get_key()
+    print(choice)
+    if choice.isdigit() and 1 <= int(choice) <= len(commands):
+        selected_label, selected_cmd = commands[int(choice) - 1]
+        sys.stdout.write(f"\r\n  {GREEN}[SYS] Injecting: {selected_cmd}{RESET}\r\n")
+        sys.stdout.flush()
+        return selected_cmd + "\r"
+    return None
 
 def parse_version_tuple(v_str):
     """
@@ -401,12 +504,22 @@ def run_session(port, baud):
         return 'RESTART'
 
     clear_screen()
-    status_bar = f"{CYAN}┌── SYSTEM SESSION ACTIVE ───────────────────────────────────────────────────┐\n│ DEVICE: {WHITE}{port:<22}{CYAN} │ SPEED: {YELLOW}{baud:<7} bps{CYAN} │ MODE: {GREEN}8N1 RAW{CYAN} │\n│ CONTROLS: {RED}[Ctrl+C]{CYAN} Exit  │ {YELLOW}[Ctrl+R]{CYAN} Change Baudrate / Return to Menu         │\n└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n"
+    status_bar = (
+        f"{CYAN}┌── SYSTEM SESSION ACTIVE ───────────────────────────────────────────────────┐\n"
+        f"│ DEVICE: {WHITE}{port:<22}{CYAN} │ SPEED: {YELLOW}{baud:<7} bps{CYAN} │ MODE: {GREEN}8N1 RAW{CYAN} │\n"
+        f"│ CONTROLS: {YELLOW}[Ctrl+A]{CYAN} CheatSheet │ {YELLOW}[Ctrl+R]{CYAN} Menu │ {RED}[Ctrl+C]{CYAN} Exit                      │\n"
+        f"└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n"
+    )
     print(status_bar)
     sys.stdout.write(f"{DIM}[SYS] Line ready. Press ENTER to wake target CLI prompt...{RESET}\n\n")
     sys.stdout.flush()
 
     action = 'QUIT'
+
+    rx_bytes_total = 0
+    tx_bytes_total = 0
+    rx_buffer_text = ""
+    detected_vendor = None
 
     if IS_WINDOWS:
         last_recv_time = time.time()
@@ -422,15 +535,34 @@ def run_session(port, baud):
                     elif ch == b'\x12': # Ctrl+R
                         action = 'RESTART'
                         break
+                    elif ch == b'\x01': # Ctrl+A CheatSheet
+                        cmd = render_cheatsheet_overlay(detected_vendor)
+                        if cmd:
+                            ser.write(cmd.encode('utf-8'))
+                            tx_bytes_total += len(cmd)
+                        continue
+
                     ser.write(ch)
+                    tx_bytes_total += len(ch)
 
                 if ser.in_waiting > 0:
                     data = ser.read(ser.in_waiting)
                     if data:
                         has_received_data = True
                         last_recv_time = time.time()
+                        rx_bytes_total += len(data)
                         sys.stdout.buffer.write(data)
                         sys.stdout.buffer.flush()
+
+                        if detected_vendor is None:
+                            rx_buffer_text += data.decode('utf-8', errors='ignore')
+                            if len(rx_buffer_text) > 4096:
+                                rx_buffer_text = rx_buffer_text[-4096:]
+                            v = detect_vendor(rx_buffer_text)
+                            if v:
+                                detected_vendor = v
+                                sys.stdout.write(f"\r\n  {GREEN}[SYS VENDOR DETECTED]{RESET} {WHITE}{BOLD}{detected_vendor}{RESET}\r\n")
+                                sys.stdout.flush()
 
                 if not has_received_data and not warning_printed and (time.time() - last_recv_time > 6.0):
                     sys.stdout.write(f"\r\n\r\n{YELLOW}[SYS WARNING] No data received from target device after 6s.{RESET}\r\n")
@@ -444,12 +576,14 @@ def run_session(port, baud):
             action = 'QUIT'
         finally:
             ser.close()
-            print(f"\n{CYAN}───────────────────────────────────────────────────────────────────────────────{RESET}")
-            print(f"  {GREEN}[SYS] UwawConnect session ended for {port}.{RESET}")
-            print(f"{CYAN}───────────────────────────────────────────────────────────────────────────────{RESET}\n")
+            vendor_disp = detected_vendor if detected_vendor else "Generic / Unknown"
+            print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
+            print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
+            print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
 
     else:
-        # POSIX (macOS & Linux)
+        # POSIX (macOS & Linux & BSD)
         old_settings = termios.tcgetattr(sys.stdin)
         last_recv_time = time.time()
         has_received_data = False
@@ -468,15 +602,38 @@ def run_session(port, baud):
                     elif ch == '\x12':  # Ctrl+R
                         action = 'RESTART'
                         break
+                    elif ch == '\x01':  # Ctrl+A CheatSheet
+                        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                        try:
+                            cmd = render_cheatsheet_overlay(detected_vendor)
+                        finally:
+                            tty.setraw(sys.stdin.fileno())
+                        if cmd:
+                            ser.write(cmd.encode('utf-8'))
+                            tx_bytes_total += len(cmd)
+                        continue
+
                     ser.write(ch.encode('utf-8', errors='ignore'))
+                    tx_bytes_total += len(ch)
 
                 if ser in rlist:
                     data = ser.read(2048)
                     if data:
                         has_received_data = True
                         last_recv_time = time.time()
+                        rx_bytes_total += len(data)
                         sys.stdout.buffer.write(data)
                         sys.stdout.buffer.flush()
+
+                        if detected_vendor is None:
+                            rx_buffer_text += data.decode('utf-8', errors='ignore')
+                            if len(rx_buffer_text) > 4096:
+                                rx_buffer_text = rx_buffer_text[-4096:]
+                            v = detect_vendor(rx_buffer_text)
+                            if v:
+                                detected_vendor = v
+                                sys.stdout.write(f"\r\n  {GREEN}[SYS VENDOR DETECTED]{RESET} {WHITE}{BOLD}{detected_vendor}{RESET}\r\n")
+                                sys.stdout.flush()
 
                 if not has_received_data and not warning_printed and (time.time() - last_recv_time > 6.0):
                     sys.stdout.write(f"\r\n\r\n{YELLOW}[SYS WARNING] No data received from target device after 6s.{RESET}\r\n")
@@ -491,9 +648,13 @@ def run_session(port, baud):
         finally:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
             ser.close()
-            print(f"\n{CYAN}───────────────────────────────────────────────────────────────────────────────{RESET}")
-            print(f"  {GREEN}[SYS] UwawConnect session ended for {port}.{RESET}")
-            print(f"{CYAN}───────────────────────────────────────────────────────────────────────────────{RESET}\n")
+            vendor_disp = detected_vendor if detected_vendor else "Generic / Unknown"
+            print(f"\n{CYAN}┌── SESSION STATISTICS SUMMARY ──────────────────────────────────────────────┐{RESET}")
+            print(f"{CYAN}│ {WHITE}DEVICE:{RESET} {port:<23} │ {WHITE}VENDOR:{RESET} {GREEN}{vendor_disp:<28}{CYAN}│{RESET}")
+            print(f"{CYAN}│ {WHITE}RECEIVED (RX):{RESET} {YELLOW}{format_bytes(rx_bytes_total):<15}{CYAN} │ {WHITE}TRANSMITTED (TX):{RESET} {YELLOW}{format_bytes(tx_bytes_total):<19}{CYAN}│{RESET}")
+            print(f"{CYAN}└─────────────────────────────────────────────────────────────────────────────┘{RESET}\n")
+
+    return action
 
     return action
 
