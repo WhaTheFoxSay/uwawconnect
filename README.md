@@ -32,7 +32,7 @@
 Run this command in your terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/WhaTheFoxSay/uwawconnect/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/WhaTheFoxSay/uwawconnect/main/install.sh)
 ```
 
 Or execute locally:
