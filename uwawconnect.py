@@ -25,7 +25,7 @@ else:
     import select
 
 # Version & Governance Constants
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __release_channel__ = "stable"
 
 REPO_OWNER = "WhaTheFoxSay"
@@ -177,7 +177,9 @@ def find_serial_ports():
             # BSD (FreeBSD, OpenBSD, NetBSD)
             '/dev/cuaU*',
             '/dev/cuau*',
-            '/dev/ttyU*'
+            '/dev/ttyU*',
+            # Solaris / Illumos / SmartOS
+            '/dev/term/*'
         ]
         for pattern in patterns:
             ports.extend(glob.glob(pattern))

@@ -41,17 +41,32 @@ if ! command -v python3 &> /dev/null; then
     elif command -v yum &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected CentOS/RHEL (yum). Installing python3...${RESET}"
         $SUDO_CMD yum install -y -q python3 python3-pip 2>/dev/null || true
+    elif command -v pacman &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected Arch/Manjaro (pacman). Installing python python-pyserial...${RESET}"
+        $SUDO_CMD pacman -Sy --noconfirm python python-pyserial 2>/dev/null || true
+    elif command -v eopkg &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected Solus Linux (eopkg). Installing python3...${RESET}"
+        $SUDO_CMD eopkg install -y python3 2>/dev/null || true
+    elif command -v xbps-install &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected Void Linux (xbps). Installing python3...${RESET}"
+        $SUDO_CMD xbps-install -Sy python3 2>/dev/null || true
+    elif command -v emerge &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected Gentoo Linux (emerge). Installing python...${RESET}"
+        $SUDO_CMD emerge --ask=n dev-lang/python 2>/dev/null || true
+    elif command -v nix-env &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected NixOS (nix-env). Installing python3...${RESET}"
+        nix-env -iA nixos.python3 2>/dev/null || true
     elif command -v brew &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected macOS (Homebrew). Installing python3...${RESET}"
         brew install python3
     elif command -v pkg &> /dev/null; then
-        echo -e "  ${DIM}[SYS] Detected FreeBSD (pkg). Installing python3...${RESET}"
+        echo -e "  ${DIM}[SYS] Detected FreeBSD/Solaris (pkg). Installing python3...${RESET}"
         $SUDO_CMD pkg install -y python3 2>/dev/null || true
     elif command -v pkg_add &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected OpenBSD (pkg_add). Installing python3...${RESET}"
         $SUDO_CMD pkg_add python3 2>/dev/null || true
     elif command -v pkgin &> /dev/null; then
-        echo -e "  ${DIM}[SYS] Detected NetBSD (pkgin). Installing python3...${RESET}"
+        echo -e "  ${DIM}[SYS] Detected NetBSD/Solaris (pkgin). Installing python3...${RESET}"
         $SUDO_CMD pkgin -y install python3 2>/dev/null || true
     else
         echo -e "  ${RED}[ERROR] Package manager not recognized. Please install python3 manually.${RESET}"
@@ -79,6 +94,8 @@ if ! python3 -c "import serial" 2>/dev/null; then
             $SUDO_CMD dnf install -y -q python3-pyserial 2>/dev/null || true
         elif command -v yum &> /dev/null; then
             $SUDO_CMD yum install -y -q python3-pyserial 2>/dev/null || true
+        elif command -v pacman &> /dev/null; then
+            $SUDO_CMD pacman -Sy --noconfirm python-pyserial 2>/dev/null || true
         elif command -v pkg &> /dev/null; then
             $SUDO_CMD pkg install -y py311-pyserial 2>/dev/null || true
         fi
