@@ -1,11 +1,11 @@
-# ⚡ UwawConnect v1.0
+# ⚡ UwawConnect v1.0.0
 
 > **Next-Generation Cross-Platform Serial Terminal Console Interface**  
 > Built for Network Engineers, Sysadmins, and Infrastructure Operations.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ UWAWCONNECT v1.0 ── Serial Console System                              │
+│ UWAWCONNECT v1.0.0 ── Serial Console System (STABLE)                       │
 │ Wownet Infrastructure Operating Console Interface                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -14,20 +14,21 @@
 
 ## ✨ Features
 
-- **🌐 Cross-Platform (macOS, Linux, Windows)**: Seamlessly operates on macOS (Intel/Apple Silicon), Linux (Ubuntu, Debian, RHEL, Arch, Alpine, Raspberry Pi OS), and Windows 10/11 (`COM1`..`COM64`).
+- **🌐 Cross-Platform (macOS, Linux, BSD, Windows)**: Seamlessly operates on macOS (Intel/Apple Silicon), Linux (Ubuntu, Debian, RHEL, Arch, Alpine, Raspberry Pi OS), BSD (FreeBSD, OpenBSD, NetBSD), and Windows 10/11 (`COM1`..`COM64`).
+- **📦 In-Place Auto-Updater**: Press `[C]` in the setup menu to check for newer GitHub releases and upgrade in-place without losing shell aliases or reinstalling.
 - **🌀 High-Tech UNIX Cyberpunk UI**: Built with ANSI Unicode box-drawing frames and real-time ASCII spinners. Zero clunky emojis, 100% clean POSIX indicators (`[OK]`, `[SYS]`, `[ERROR]`).
-- **⚡ Instant Keypress Navigation**: Select menu items (`1`, `2`, `M`, `B`, `Q`, `U`) instantly without needing to press the Enter key.
-- **🔍 Auto-Hardware Bus Scanning**: Automatically discovers connected USB-to-Serial console cables (FTDI, Prolific, CP2102, CH340, USB ACM).
+- **⚡ Instant Keypress Navigation**: Select menu items (`1`, `2`, `M`, `B`, `C`, `Q`, `U`) instantly without needing to press the Enter key.
+- **🔍 Auto-Hardware Bus Scanning**: Automatically discovers connected USB-to-Serial console cables (FTDI, Prolific, CP2102, CH340, USB ACM, BSD `/dev/cuaU*`).
 - **⚠️ Intelligent Baudrate Misconfiguration Warning**: Detects silent serial lines and provides actionable technical troubleshooting.
 - **🔄 Hotkey Session Switching**: Press `Ctrl + R` inside an active console session to instantly return to the setup menu and switch baudrates or ports.
-- **🛠️ Self-Healing Automated Installer**: Automatically installs Python 3, `pip3`, and `pyserial` dependencies via `apt-get`, `dnf`, `yum`, `brew`, or `winget`.
+- **🛠️ Self-Healing Automated Installer**: Automatically installs Python 3 and `pyserial` dependencies via native package managers (`apt-get`, `dnf`, `yum`, `brew`, `pkg`, `pkg_add`, `pkgin`, or `winget`).
 - **🗑️ Built-in One-Click Uninstaller**: Select `[U]` in the menu to cleanly uninstall the app and remove shell aliases with a friendly farewell banner (`See You Next Time :)`).
 
 ---
 
 ## 🚀 One-Line Installation
 
-### 🍏 macOS & 🐧 Linux
+### 🍏 macOS, 🐧 Linux & 😈 BSD
 
 Run this command in your terminal:
 
@@ -71,7 +72,7 @@ uwaw
 
 Or pass direct port and speed parameters:
 ```bash
-# macOS / Linux
+# macOS / Linux / BSD
 uwaw /dev/cu.usbserial-1410 115200
 
 # Windows
@@ -91,7 +92,7 @@ uwaw COM3 9600
 
 | Requirement | Specification |
 | :--- | :--- |
-| **OS** | macOS 10.13+, Linux (Kernel 3.10+), Windows 10/11 |
+| **OS** | macOS 10.13+, Linux (Kernel 3.10+), BSD (FreeBSD, OpenBSD, NetBSD), Windows 10/11 |
 | **Python** | Python 3.6+ (Auto-installed if missing) |
 | **Dependencies** | `pyserial` (Auto-installed if missing) |
 | **Resource Usage** | `< 15 MB RAM`, `< 0.1% CPU` |
