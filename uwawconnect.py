@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-UwawConnect v1.0 - Professional Terminal Serial Console Interface
-Architecture: Cross-Platform (macOS, Linux, Windows POSIX/Win32)
+UwawConnect v1.0.0 - Professional Terminal Serial Console Interface
+Architecture: Cross-Platform (macOS, Linux, BSD, Windows POSIX/Win32)
 Branding: Wownet High-Performance Operations
+License: GNU General Public License v3.0 (GPL-3.0)
+Copyright (C) 2026 Wownet Infrastructure Operations & Contributors
 """
 
 import sys
