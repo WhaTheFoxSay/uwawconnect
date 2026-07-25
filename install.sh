@@ -33,14 +33,14 @@ if ! command -v python3 &> /dev/null; then
     echo -e "  ${YELLOW}[!] Python 3 missing. Attempting automatic package installation...${RESET}"
     if command -v apt-get &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected Debian/Ubuntu (apt-get). Installing python3 python3-pip python3-serial...${RESET}"
-        $SUDO_CMD apt-get update -qq -y
-        $SUDO_CMD DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-pip python3-serial
+        $SUDO_CMD apt-get update -qq -y 2>/dev/null || true
+        $SUDO_CMD DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-pip python3-serial 2>/dev/null || true
     elif command -v dnf &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected RHEL/Fedora/AlmaLinux (dnf). Installing python3 python3-pip...${RESET}"
-        $SUDO_CMD dnf install -y -q python3 python3-pip
+        $SUDO_CMD dnf install -y -q python3 python3-pip 2>/dev/null || true
     elif command -v yum &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected CentOS/RHEL (yum). Installing python3...${RESET}"
-        $SUDO_CMD yum install -y -q python3 python3-pip
+        $SUDO_CMD yum install -y -q python3 python3-pip 2>/dev/null || true
     elif command -v brew &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected macOS (Homebrew). Installing python3...${RESET}"
         brew install python3
