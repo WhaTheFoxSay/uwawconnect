@@ -68,6 +68,9 @@ if ! command -v python3 &> /dev/null; then
     elif command -v pkgin &> /dev/null; then
         echo -e "  ${DIM}[SYS] Detected NetBSD/Solaris (pkgin). Installing python3...${RESET}"
         $SUDO_CMD pkgin -y install python3 2>/dev/null || true
+    elif command -v pkgman &> /dev/null; then
+        echo -e "  ${DIM}[SYS] Detected Haiku OS (pkgman). Installing python3...${RESET}"
+        pkgman install -y python3 2>/dev/null || true
     else
         echo -e "  ${RED}[ERROR] Package manager not recognized. Please install python3 manually.${RESET}"
         exit 1
